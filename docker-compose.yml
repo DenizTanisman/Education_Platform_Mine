@@ -74,6 +74,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - internal_net
+    # No host port published — postgres stays on internal_net only. Prisma
+    # migrations + studio run via `make migrate` / `make studio`, which spin
+    # up a one-off node container joined to the same compose network.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -83,9 +86,12 @@ services:
 networks:
   public_net:
     driver: bridge
+  # `internal_net` provides segmentation (Caddy never sees postgres) but is
+  # NOT marked `internal: true` so one-off tooling containers (prisma migrate,
+  # ingest scripts) joined to this network can still reach package registries
+  # and prisma's binary mirror at run time.
   internal_net:
     driver: bridge
-    internal: true
 
 volumes:
   postgres_data:

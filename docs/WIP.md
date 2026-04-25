@@ -14,9 +14,9 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** 2.5 — E2E sandbox testi (tamam, faz sonu)
-- **Branch:** `feat/sandbox-e2e` (zincir: dockerfile → seccomp → harness → sandbox-runner → e2e)
-- **Faz 1:** merged to `main`, `phase-1-complete` tag pushed.
+- **Alt-task:** 3.1 — Prisma şeması + initial migration (tamam)
+- **Branch:** `feat/prisma-schema`
+- **Faz 1 + Faz 2 → main, `phase-1-complete` ve `phase-2-complete` tag'ları pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
 ## Son durum notları
@@ -64,8 +64,19 @@
   `docs/sandbox-security-selftest.md`, Makefile'a `sandbox` ve `sandbox-test`
   target'ları eklendi. 3/3 örnek doğrulandı: pass→passed, fail→failed (clean
   diff), malicious→3/3 escape contained (URLError/OSError/ptrace rv=-1).
+- Faz 2 → main: PR'lar yeniden açıldı (downstream'ler her squash'ta kapanıyor —
+  pattern memory'de). 5 PR sırayla squash-merged, `phase-2-complete` tag pushed.
+- Faz 3.1 tamamlandı: `app/prisma/schema.prisma` — 9 model (User, Unit, Video,
+  Project, TestGroup, TestCase, UnitProgress, Submission, SubmissionTestResult)
+  + 4 enum. Migration: `init` + `running_submission_partial_unique` (raw SQL
+  partial unique index, prisma henüz native desteklemiyor). `app/Dockerfile.migrate`
+  (node:20-slim + openssl) ve `make migrate-build` / `make migrate` target'ları.
+  `internal_net`'in `internal: true` flag'i kaldırıldı — segmentation kalıyor
+  (Caddy'nin postgres'i göremiyor olması) ama bir-off tooling container'ları
+  prisma binary'lerini fetch edebilsin.
 
 ## Bir sonraki adım
 
-Faz 2 sonu — 5 chained PR (#3 #4 #5 #6 + 2.5 PR #7) `main`'e squash-merge,
-`phase-2-complete` tag. Sonra Faz 3 — Prisma schema + content ingest.
+Alt-task 3.2 — `scripts/ingest-content.ts`: `content/inbox/*.zip` discovery,
+şema validation (`unit-NN-slug.zip` regex, ZIP içi yapı), `pass_final.zip`
+otomatik runner'da test, başarılıysa `content/units/`'e açma + DB upsert.
