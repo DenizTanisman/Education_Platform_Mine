@@ -39,9 +39,17 @@ RUN groupadd --gid 1001 sandbox \
  && chown -R sandbox:sandbox /workspace
 
 WORKDIR /workspace
+
+# Harness sources (Faz 2.3). Copied as root then ownership fixed — needed
+# because the USER switch happens below and COPY --chown must match existing
+# user. Mode 0444 keeps them read-only for the sandbox user, so student code
+# cannot overwrite them at runtime.
+COPY --chown=sandbox:sandbox --chmod=0444 \
+     infra/sandbox/harness.py       /workspace/harness.py
+COPY --chown=sandbox:sandbox --chmod=0444 \
+     infra/sandbox/harness_api.py   /workspace/harness_api.py
+
 USER sandbox
 
-# Entrypoint per 01_BUILD_PLAN.md §2.1. harness.py is provided in Faz 2.3;
-# until then the default CMD will fail at runtime (expected), but the image
-# still builds and `--entrypoint python` overrides work for self-test.
+# At run time the runner bind-mounts tests/ and code/ under /workspace.
 ENTRYPOINT ["python", "/workspace/harness.py"]

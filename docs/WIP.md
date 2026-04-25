@@ -6,8 +6,8 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** 2.2 — Seccomp profili (tamam)
-- **Branch:** `feat/sandbox-seccomp` (chained on `feat/sandbox-dockerfile`)
+- **Alt-task:** 2.3 — Harness.py (tamam)
+- **Branch:** `feat/harness` (chained on `feat/sandbox-seccomp` → `feat/sandbox-dockerfile`)
 - **Faz 1:** merged to `main`, `phase-1-complete` tag pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
@@ -34,8 +34,14 @@
   clone3/reboot) hem ALLOW rule'larından çıkarıldı hem de en üste explicit
   ERRNO block olarak eklendi. `scripts/test-seccomp.sh` control+test1+test2 geçti.
   Gerekçeler `docs/sandbox-seccomp.md`'de.
+- Faz 2.3 tamamlandı: `infra/sandbox/harness.py` + `harness_api.py`,
+  Dockerfile `COPY --chmod=0444` ile her ikisini de `/workspace`'e ro
+  kopyalıyor. Per-test 2s SIGALRM timeout, outer run_tests timeout (default 60s).
+  JSON contract (02_CONTENT_CONTRACT.md §3) harness-level failure'da bile
+  garantili. `tests/test_harness.py` 13 senaryoyla geçti + container-içi smoke
+  (full 2.4 security flag'leri altında bile harness çalıştı).
 
 ## Bir sonraki adım
 
-Alt-task 2.3 — Harness.py (test runner, JSON output format per
-02_CONTENT_CONTRACT.md §3).
+Alt-task 2.4 — Hardened `docker run` wrapper (`runner/src/sandbox-runner.ts`,
+tüm §2.4 flag'leri, stdout/stderr 1MB cap, exit-code yorumu).
