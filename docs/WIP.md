@@ -3,11 +3,19 @@
 > Bu dosya Claude Code tarafından otomatik güncellenir. Yarım kalan işi ve
 > bir sonraki session'ın nereden devam edeceğini gösterir.
 
+## Yön (2026-04-25, Deniz)
+
+> Sistem tamamen hazır olsun → sonra Deniz Faz 8 içeriklerini getirir.
+> Faz 2.5'ten Faz 7'ye kadar tek tek alt-task onayı bekleme; faz-sonu
+> merge'leri otomatik yap (gh CLI serbest, §9 + memory). UI heavy
+> alt-task'larda (6.x, 7.x) auto-checks (build / typecheck / smoke)
+> yeterli — görsel manuel test EN SON, sistem bütünüyle hazırken.
+
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** 2.4 — Hardened docker run wrapper (tamam)
-- **Branch:** `feat/sandbox-runner` (chained on `feat/harness` → `feat/sandbox-seccomp` → `feat/sandbox-dockerfile`)
+- **Alt-task:** 2.5 — E2E sandbox testi (tamam, faz sonu)
+- **Branch:** `feat/sandbox-e2e` (zincir: dockerfile → seccomp → harness → sandbox-runner → e2e)
 - **Faz 1:** merged to `main`, `phase-1-complete` tag pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
@@ -51,8 +59,13 @@
   Integration suite 8/8: arg construction (2) + happy/timeout/network/readonly/
   fork-bomb-containment/fail-propagation (6).
 
+- Faz 2.5 tamamlandı: `runner/src/cli.ts` (thin CLI), `scripts/test-sandbox.sh`,
+  `scripts/sandbox-examples/{pass,fail,malicious}/{tests,code}/`,
+  `docs/sandbox-security-selftest.md`, Makefile'a `sandbox` ve `sandbox-test`
+  target'ları eklendi. 3/3 örnek doğrulandı: pass→passed, fail→failed (clean
+  diff), malicious→3/3 escape contained (URLError/OSError/ptrace rv=-1).
+
 ## Bir sonraki adım
 
-Alt-task 2.5 — E2E sandbox testi (`scripts/test-sandbox.sh`, örnek ZIP,
-`docs/sandbox-security-selftest.md` güvenlik raporu). **Bu 👤 — Deniz manuel
-testi gerekli**, pass/fail/malicious ZIP senaryoları.
+Faz 2 sonu — 5 chained PR (#3 #4 #5 #6 + 2.5 PR #7) `main`'e squash-merge,
+`phase-2-complete` tag. Sonra Faz 3 — Prisma schema + content ingest.
