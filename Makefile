@@ -4,7 +4,7 @@
 # Assumes a populated `.env` in the project root (copy .env.example first).
 
 .PHONY: start stop logs status reset clean sandbox sandbox-test \
-        migrate-build migrate
+        migrate-build migrate ingest ingest-dry
 
 start:
 	docker compose up -d --build
@@ -62,3 +62,19 @@ migrate: migrate-build
 	  --env-file .env \
 	  iau-app-migrate:latest \
 	  npx prisma migrate deploy
+
+# Ingest content/inbox/*.zip into the database. Runs from the HOST (not
+# inside a container) because the script spawns the sandbox runner via
+# docker, and docker-in-docker would force path-translation for the bind
+# mounts. Postgres is reachable on loopback via LOCAL_DATABASE_URL; sandbox
+# image is reachable via the local docker daemon.
+ingest: sandbox
+	docker compose up -d postgres
+	cd app && DATABASE_URL=$$(grep '^LOCAL_DATABASE_URL=' ../.env | cut -d= -f2-) \
+	  npm run ingest
+
+# --dry-run variant: validates ZIPs and runs the reference solution through
+# the sandbox, but does not write to the DB or move any files.
+ingest-dry: sandbox
+	cd app && DATABASE_URL=$$(grep '^LOCAL_DATABASE_URL=' ../.env | cut -d= -f2-) \
+	  npm run ingest:dry-run
