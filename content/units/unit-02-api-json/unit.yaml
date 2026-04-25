@@ -1,0 +1,30 @@
+order: 2
+slug: api-json
+title: "API ve JSON"
+description: |
+  HTTP istekleri (requests kütüphanesi), JSON parse, retry stratejileri
+  (exponential backoff), structured logging ve graceful error handling.
+  Modül sonunda öğrenci public bir API'den veri çeken, ağ hatalarına
+  dirençli bir CLI aracı yazar.
+tags:
+  - http
+  - api
+  - json
+  - retry
+  - logging
+duration_minutes: 300
+published: true
+
+test_groups:
+  - name: "Başarılı istek"
+    weight: 1
+    order: 1
+  - name: "Hata yönetimi"
+    weight: 2
+    order: 2
+  - name: "Retry davranışı"
+    weight: 2
+    order: 3
+  - name: "Dosyaya kaydetme"
+    weight: 1
+    order: 4

@@ -1,0 +1,32 @@
+order: 5
+slug: function-calling
+title: "Function Calling ile Tool Kullanımı"
+description: |
+  OpenAI tool calling ile LLM'e Python fonksiyonlarını bir araç (tool)
+  olarak verme. Pydantic schema'larıyla tool input'u tanımlama, Tool
+  registry pattern'i, agent loop'u (tool çağrısı → sonuç → final cevap),
+  paralel tool execution, max_iters güvenlik, hata sarmalama. Modülün
+  sonunda öğrenci hava durumu ve hesap araçları olan bir CLI asistan
+  yazar — gerçek anlamda agent'ın başlangıcı.
+tags:
+  - function-calling
+  - tools
+  - agent
+  - openai
+  - pydantic
+duration_minutes: 360
+published: true
+
+test_groups:
+  - name: "Tool tanımı"
+    weight: 2
+    order: 1
+  - name: "Agent loop"
+    weight: 3
+    order: 2
+  - name: "Hata yönetimi"
+    weight: 1
+    order: 3
+  - name: "Tool yürütme"
+    weight: 2
+    order: 4

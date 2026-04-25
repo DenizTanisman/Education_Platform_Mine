@@ -1,0 +1,24 @@
+order: 0
+slug: environment
+title: "Geliştirme Ortamı ve Python Temelleri"
+description: |
+  Sıfırdan VS Code, terminal ve Python kurulumu. Değişkenler, listeler,
+  sözlükler, döngüler ve fonksiyonlar. Modülün sonunda öğrenci ilk üç
+  Python fonksiyonunu yazıp testten geçirir.
+tags:
+  - python
+  - setup
+  - basics
+duration_minutes: 300
+published: true
+
+test_groups:
+  - name: "selamla fonksiyonu"
+    weight: 1
+    order: 1
+  - name: "topla fonksiyonu"
+    weight: 1
+    order: 2
+  - name: "cift_say fonksiyonu"
+    weight: 1
+    order: 3

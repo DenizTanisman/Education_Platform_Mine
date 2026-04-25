@@ -1,0 +1,32 @@
+order: 4
+slug: structured-output
+title: "Structured Output ile Pydantic"
+description: |
+  Pydantic v2 ile veri sınıfları (BaseModel), Field constraint'leri (ge/le,
+  default_factory, description), Enum kullanımı, OpenAI structured outputs
+  (chat.completions.parse + response_format), JSON Schema otomatik üretimi,
+  ve LLM cevabını tip-güvenli Pydantic instance olarak alma. Modülün
+  sonunda öğrenci kullanıcı yorumlarından structured bilgi çıkaran bir
+  araç yazar (rating, sentiment, category, red_flags).
+tags:
+  - pydantic
+  - structured-output
+  - openai
+  - validation
+  - enum
+duration_minutes: 300
+published: true
+
+test_groups:
+  - name: "Schema doğrulama"
+    weight: 2
+    order: 1
+  - name: "LLM çağrısı"
+    weight: 2
+    order: 2
+  - name: "Hata yönetimi"
+    weight: 1
+    order: 3
+  - name: "Dosyaya kaydetme"
+    weight: 1
+    order: 4
