@@ -6,8 +6,8 @@
 ## Aktif durum
 
 - **Faz:** Faz 1 — Repo İskeleti
-- **Alt-task:** 1.3 — Makefile ve temel komutlar (başlıyor)
-- **Branch:** `feat/compose-skeleton`
+- **Alt-task:** 1.3 — Makefile ve temel komutlar (tamam). Faz 1 bitti.
+- **Branch:** `feat/makefile` (pushed)
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
 ## Son durum notları
@@ -20,7 +20,13 @@
 - Faz 1.2 tamamlandı: 4 servis (caddy/app/runner/postgres) placeholder
   image'larla ayağa kalkıyor. `http://localhost` 200 döndü. `internal_net`
   postgres için izole, `public_net` sadece caddy için host'a açık.
+- Faz 1.3 tamamlandı: `Makefile` altı hedefle (`start/stop/logs/status/reset/clean`).
+  `reset` "YES" confirm prompt'u ile korunuyor.
 
 ## Bir sonraki adım
 
-Alt-task 1.3 — Makefile (`make start/stop/logs/status/reset/clean`).
+Faz 1 tüm alt-task'ları bitti (1.1, 1.2, 1.3). §9.3 gereği faz sonu merge
+zamanı: `feat/compose-skeleton` ve `feat/makefile` branch'lerini `main`'e
+sırayla squash-merge + `phase-1-complete` tag. Deniz onayı bekleniyor.
+
+Sonra Faz 2 — Sandbox Image + Harness başlar.
