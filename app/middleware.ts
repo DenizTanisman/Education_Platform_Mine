@@ -17,6 +17,11 @@ const PUBLIC_PATHS = new Set([
   "/register",
   "/api/login",
   "/api/register",
+  // Logout must be reachable even when the session cookie is stale
+  // (e.g. JWT_SECRET rotated after the cookie was issued). Otherwise the
+  // user is stuck — middleware blocks the very POST that would clear the
+  // bad cookie.
+  "/api/logout",
   "/api/healthz",
 ]);
 
