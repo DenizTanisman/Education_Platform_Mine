@@ -1,17 +1,18 @@
-# IAU AI Platform — Faz 1.2 compose skeleton
+# IAU AI Platform — production-ish compose stack.
 #
-# Services (per 01_BUILD_PLAN.md §1.2):
-#   - caddy      public_net only        (reverse proxy, real image)
-#   - app        public_net + internal  (placeholder nginx:alpine, later Next.js)
-#   - runner     internal_net only      (placeholder nginx:alpine, later Node runner)
-#   - postgres   internal_net only      (real image, real creds via .env)
+# Services:
+#   - caddy      public_net only        reverse-proxy + TLS termination
+#   - app        public_net + internal  Next.js (Faz 5+)
+#   - runner     internal_net only      sandbox orchestrator (Faz 4)
+#   - postgres   internal_net only      Postgres 16 (loopback exposed for tooling)
 #
-# Networks:
-#   - public_net    bridge, reachable from host
-#   - internal_net  bridge with `internal: true` (no egress to the outside)
+# Volumes:
+#   - postgres_data, caddy_data, caddy_config — service state
 #
-# This file stands up the stack with placeholder images so we can validate
-# compose config + basic connectivity before writing any real service code.
+# Bind mounts:
+#   - ./content:/srv/content:ro    student-facing content layout (read-only)
+#   - ./app/public/pdfs:/srv/pdfs  ingested PDFs served via /pdfs/* by app
+#   - /var/run/docker.sock         runner spawns iau-sandbox containers via the host daemon
 
 services:
   caddy:
@@ -31,15 +32,24 @@ services:
       - app
 
   app:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    image: iau-app:latest
     container_name: iau_app
     restart: unless-stopped
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       RUNNER_URL: ${RUNNER_URL}
       RUNNER_SHARED_SECRET: ${RUNNER_SHARED_SECRET}
+    volumes:
+      # Mount content/units read-only so the app can serve education PDFs
+      # and look up tests/test_runner.py for runner dispatch (currently the
+      # runner reads them directly; this mount is for forward-compat).
+      - ./content/units:/srv/content/units:ro
+      - ./app/public/pdfs:/app/public/pdfs:ro
     networks:
       - public_net
       - internal_net
@@ -50,12 +60,37 @@ services:
         condition: service_started
 
   runner:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: runner/Dockerfile
+    image: iau-runner:latest
     container_name: iau_runner
     restart: unless-stopped
     environment:
+      RUNNER_PORT: 4000
       RUNNER_SHARED_SECRET: ${RUNNER_SHARED_SECRET}
       DATABASE_URL: ${DATABASE_URL}
+      # Same absolute path as the host so `docker run -v` arguments built
+      # by runner-core resolve on the daemon's filesystem. See volumes:
+      # the host repo root is bind-mounted at this same path.
+      REPO_ROOT: ${PWD}
+    volumes:
+      # Same-path bind so paths inside the runner == paths on the host.
+      # Without this, `docker run -v /content/units/...` fails with
+      # "mounts denied: ... not shared from the host".
+      - ${PWD}:${PWD}:ro
+      # /tmp:/tmp lets the runner extract submission ZIPs to /tmp/sub-<uuid>
+      # and the sandbox bind-mount it back from the host's /tmp.
+      - /tmp:/tmp
+      # Bind the host docker socket so the runner can launch iau-sandbox
+      # containers. The host must have iau-sandbox:latest pre-built (see
+      # `make sandbox`).
+      - /var/run/docker.sock:/var/run/docker.sock
+    # docker.sock is owned by root:docker on Linux; macOS Docker Desktop
+    # is more permissive. Adding gid 0 is the simplest portable fix; we
+    # are aware it loosens the runner's user model — see READINESS.md.
+    group_add:
+      - "0"
     networks:
       - internal_net
     depends_on:
@@ -74,10 +109,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - internal_net
-    # Loopback host exposure for host-side tooling (prisma studio, ingest
-    # script, ad-hoc psql). Other containers still resolve postgres via the
-    # `postgres:5432` hostname over internal_net. Host port 5433 avoids
-    # colliding with a typical system postgres on 5432.
+    # Loopback host exposure for prisma studio + host-side ingest. Other
+    # containers still resolve postgres via `postgres:5432`. Host port 5433
+    # avoids a typical system postgres on 5432.
     ports:
       - "127.0.0.1:5433:5432"
     healthcheck:
@@ -89,10 +123,9 @@ services:
 networks:
   public_net:
     driver: bridge
-  # `internal_net` provides segmentation (Caddy never sees postgres) but is
-  # NOT marked `internal: true` so one-off tooling containers (prisma migrate,
-  # ingest scripts) joined to this network can still reach package registries
-  # and prisma's binary mirror at run time.
+  # Segmented but not `internal: true`: caddy still cannot reach postgres
+  # (it's only on public_net), but one-off tooling containers attached to
+  # internal_net can fetch their dependencies.
   internal_net:
     driver: bridge
 

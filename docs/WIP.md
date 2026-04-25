@@ -14,9 +14,9 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** Faz 5.1-5.4 — Auth (Next.js + jose + bcrypt + UI) (tamam)
-- **Branch:** `feat/auth`
-- **Faz 1-4 → main, `phase-{1,2,3,4}-complete` tag'ları pushed.
+- **Durum:** Sistem hazır. Faz 1-7 → main, `system-ready` tag.
+- **Branch:** `main` (chore/readiness merged)
+- **Bekleyen:** Faz 8 — Deniz'in unit içeriklerini `content/inbox/`'a atması.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
 ## Son durum notları
@@ -114,7 +114,20 @@
   - End-to-end smoke: register→cookie set, /api/me→user data, login bad pw→401,
     logout→cookie clear, /api/me sonrası→401, /dashboard→307 to /login.
 
+- Faz 5,6,7 hepsi → main + `phase-5-complete` / `phase-6-complete` /
+  `phase-7-complete` tag'ları pushed.
+- Production Dockerfile'lar (`app/Dockerfile`, `runner/Dockerfile`),
+  compose wiring (build:./app + build:./runner, content + seccomp +
+  docker.sock + same-path repo bind mount, REPO_ROOT env), Caddyfile
+  app:3000'e taşındı, `make promote-admin EMAIL=...`, `docs/READINESS.md`.
+- End-to-end compose smoke: register → /api/me → ingest → final upload →
+  runner dispatch → docker-in-docker sandbox → PASSED → UnitProgress
+  COMPLETED → admin pages reachable. **Submission tek poll'da terminal'e
+  ulaştı (~600ms total)**.
+- `system-ready` tag pushed.
+
 ## Bir sonraki adım
 
-Faz 5 sonu merge → Faz 6 — Student UI (dashboard ünite listesi, education
-PDF iframe, projects markdown, final ZIP upload + status polling).
+Faz 8 — Deniz unit içeriklerini hazırlayıp `content/inbox/unit-NN-slug.zip`
+formatında atar. `make ingest` (host'tan) DB'ye kaydeder. Manuel test
+playbook: `docs/READINESS.md`.

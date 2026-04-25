@@ -17,7 +17,12 @@ import { prisma } from "./db.ts";
 import { runSandbox } from "./sandbox-runner.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(__dirname, "..", "..");
+// REPO_ROOT defaults to the runner package root, but is overridable via env
+// for the docker-in-docker case: we need the *host* absolute path so that
+// `docker run -v <path>:/workspace/...` resolves on the daemon's filesystem.
+// Compose sets REPO_ROOT to the host repo root and mounts it at the same
+// absolute path inside the runner container.
+const REPO_ROOT = process.env.REPO_ROOT ?? resolve(__dirname, "..", "..");
 const SECCOMP = join(REPO_ROOT, "infra", "seccomp.json");
 const UNITS_DIR = join(REPO_ROOT, "content", "units");
 
