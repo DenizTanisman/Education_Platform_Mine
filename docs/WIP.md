@@ -6,8 +6,8 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** 2.3 — Harness.py (tamam)
-- **Branch:** `feat/harness` (chained on `feat/sandbox-seccomp` → `feat/sandbox-dockerfile`)
+- **Alt-task:** 2.4 — Hardened docker run wrapper (tamam)
+- **Branch:** `feat/sandbox-runner` (chained on `feat/harness` → `feat/sandbox-seccomp` → `feat/sandbox-dockerfile`)
 - **Faz 1:** merged to `main`, `phase-1-complete` tag pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
@@ -40,8 +40,19 @@
   JSON contract (02_CONTENT_CONTRACT.md §3) harness-level failure'da bile
   garantili. `tests/test_harness.py` 13 senaryoyla geçti + container-içi smoke
   (full 2.4 security flag'leri altında bile harness çalıştı).
+- Faz 2.4 tamamlandı: `runner/` TS scaffold (Node 24 native TS, no tsx/ts-node).
+  `runner/src/sandbox-runner.ts` — `runSandbox()` + `buildDockerArgs()`.
+  Tüm §2.4 flag'leri: `--network=none --read-only --cap-drop=ALL
+  --security-opt=no-new-privileges --security-opt=seccomp=... --pids-limit=64
+  --memory=512m --memory-swap=512m --cpus=0.5 --tmpfs /tmp:rw,noexec,nosuid,size=64m`.
+  Detached watchdog container'ı `docker kill` ile hard-stop ediyor (spawnSync
+  timeout sadece CLI client'ı öldürüyor, container'ı değil — belt+suspenders).
+  stdout/stderr 1MB cap (maxBuffer). Outcome union: ok/timeout/crash/invalid_json/output_truncated.
+  Integration suite 8/8: arg construction (2) + happy/timeout/network/readonly/
+  fork-bomb-containment/fail-propagation (6).
 
 ## Bir sonraki adım
 
-Alt-task 2.4 — Hardened `docker run` wrapper (`runner/src/sandbox-runner.ts`,
-tüm §2.4 flag'leri, stdout/stderr 1MB cap, exit-code yorumu).
+Alt-task 2.5 — E2E sandbox testi (`scripts/test-sandbox.sh`, örnek ZIP,
+`docs/sandbox-security-selftest.md` güvenlik raporu). **Bu 👤 — Deniz manuel
+testi gerekli**, pass/fail/malicious ZIP senaryoları.
