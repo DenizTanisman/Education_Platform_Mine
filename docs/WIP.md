@@ -14,9 +14,9 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** Faz 4.1-4.4 — Runner HTTP service (tamam, tek branch)
-- **Branch:** `feat/runner-service`
-- **Faz 1 + 2 + 3 → main, `phase-{1,2,3}-complete` tag'ları pushed.
+- **Alt-task:** Faz 5.1-5.4 — Auth (Next.js + jose + bcrypt + UI) (tamam)
+- **Branch:** `feat/auth`
+- **Faz 1-4 → main, `phase-{1,2,3,4}-complete` tag'ları pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
 ## Son durum notları
@@ -100,7 +100,21 @@
     real Prisma write + UnitProgress verify) — 12/12 PASS toplamda
     (sandbox-runner integration 6/6 + arg construction 2/2 + server 4/0).
 
+- Faz 4 → main, `phase-4-complete` tag pushed.
+- Faz 5.1-5.4 tamamlandı: Next.js 15 scaffold (App Router), Tailwind YOK
+  (basit globals.css), tsconfig + standalone output. `app/lib/auth.ts`
+  (Node, bcrypt + signSession + maybeRefresh), `app/lib/auth-edge.ts`
+  (jose-only verifySession — middleware bcrypt'i edge bundle'a sızdırmasın),
+  `app/lib/rate-limit.ts` (in-memory sliding window). API routes:
+  /api/{register,login,logout,me,healthz}. Middleware /admin için role guard,
+  protected route'lara JWT gate. UI sayfaları: /, /login (Suspense'le sarılmış
+  useSearchParams), /register, /dashboard (Faz 6 placeholder).
+  - Tests: 27/27 PASS (auth 8 + rate-limit 6 + ingest 13).
+  - Build: clean, 12 route, middleware 39.8 kB.
+  - End-to-end smoke: register→cookie set, /api/me→user data, login bad pw→401,
+    logout→cookie clear, /api/me sonrası→401, /dashboard→307 to /login.
+
 ## Bir sonraki adım
 
-Faz 4 sonu merge → Faz 5 — Auth (jose JWT + bcrypt cost 12, /api/{register,
-login,logout,me}, edge middleware, rate limit 5/h IP).
+Faz 5 sonu merge → Faz 6 — Student UI (dashboard ünite listesi, education
+PDF iframe, projects markdown, final ZIP upload + status polling).

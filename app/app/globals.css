@@ -1,0 +1,130 @@
+/* Minimal global styles — Tailwind would be overkill for the current
+   surface area. Plain CSS keeps the build dependency-free. */
+
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --danger: #f85149;
+  --card: #161b22;
+  --border: #30363d;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100%;
+}
+
+a { color: var(--accent); }
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+label { display: block; margin: 0.5rem 0 0.25rem; color: var(--muted); }
+input, button, select, textarea {
+  font: inherit;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+}
+input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+button {
+  cursor: pointer;
+  width: auto;
+  background: var(--accent);
+  color: #0d1117;
+  border: none;
+  font-weight: 600;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+
+.error {
+  color: var(--danger);
+  font-size: 0.9em;
+  margin-top: 0.5rem;
+}
+
+.muted { color: var(--muted); }
+
+.unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.unit-card {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 1.25rem;
+  border-radius: 8px;
+}
+.unit-card[data-status="LOCKED"] { opacity: 0.6; pointer-events: none; }
+.unit-card .badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: var(--border);
+}
+.unit-card[data-status="COMPLETED"] .badge { background: #2ea04333; color: #3fb950; }
+.unit-card[data-status="IN_PROGRESS"] .badge { background: #1f6feb33; color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem;
+}
+
+pre {
+  background: #0a0e14;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  overflow: auto;
+}
+
+.test-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.test-row.passed { color: #3fb950; }
+.test-row.failed, .test-row.errored, .test-row.timeout { color: var(--danger); }
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+  transition: border-color 120ms;
+}
+.dropzone.over { border-color: var(--accent); color: var(--accent); }
