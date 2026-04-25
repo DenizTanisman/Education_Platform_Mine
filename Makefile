@@ -3,7 +3,8 @@
 # Common dev operations for the docker compose stack.
 # Assumes a populated `.env` in the project root (copy .env.example first).
 
-.PHONY: start stop logs status reset clean sandbox sandbox-test
+.PHONY: start stop logs status reset clean sandbox sandbox-test \
+        migrate-build migrate
 
 start:
 	docker compose up -d --build
@@ -45,3 +46,19 @@ sandbox-test:
 	./scripts/test-sandbox.sh pass
 	./scripts/test-sandbox.sh fail
 	./scripts/test-sandbox.sh malicious
+
+# Build the small image used to run prisma migrations + ingest from outside
+# the compose stack. node:20-slim with openssl, no app code baked in.
+migrate-build:
+	docker build -t iau-app-migrate:latest -f app/Dockerfile.migrate app/
+
+# Apply pending Prisma migrations to the dev database. Brings up postgres
+# if it is not already running; needs `.env` for DATABASE_URL.
+migrate: migrate-build
+	docker compose up -d postgres
+	docker run --rm \
+	  --network education_platform_internal_net \
+	  -v $(PWD)/app:/app -w /app \
+	  --env-file .env \
+	  iau-app-migrate:latest \
+	  npx prisma migrate deploy

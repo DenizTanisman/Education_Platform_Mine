@@ -1,0 +1,188 @@
+// IAU AI Platform — Prisma schema
+//
+// Models per 01_BUILD_PLAN.md §3.1 plus a few content fields from
+// 02_CONTENT_CONTRACT.md (tags, duration). All identifiers are cuid()
+// strings; timestamps are timestamp(3) tz-naive UTC.
+//
+// Partial unique index on Submission(userId, unitId) WHERE status='running'
+// is added in raw SQL inside the migration — Prisma core does not yet
+// support partial uniques. Application-layer (runner queue) is the primary
+// guard; the DB constraint is belt-and-suspenders.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum UnitProgressStatus {
+  LOCKED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum SubmissionStatus {
+  QUEUED
+  RUNNING
+  PASSED
+  FAILED
+  ERRORED
+}
+
+enum TestStatus {
+  PASSED
+  FAILED
+  ERRORED
+  TIMEOUT
+}
+
+// ----------------------------------------------------------------------------
+// Identity
+// ----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(STUDENT)
+  createdAt    DateTime @default(now())
+
+  progress    UnitProgress[]
+  submissions Submission[]
+}
+
+// ----------------------------------------------------------------------------
+// Content (populated by scripts/ingest-content.ts from content/inbox/*.zip)
+// ----------------------------------------------------------------------------
+
+model Unit {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  order           Int      @unique
+  title           String
+  description     String
+  tags            String[] @default([])
+  durationMinutes Int?
+  published       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  videos      Video[]
+  projects    Project[]
+  testGroups  TestGroup[]
+  progress    UnitProgress[]
+  submissions Submission[]
+}
+
+model Video {
+  id        String  @id @default(cuid())
+  unit      Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId    String
+  title     String
+  youtubeId String
+  pdfPath   String?
+  order     Int
+
+  @@index([unitId, order])
+}
+
+model Project {
+  id              String  @id @default(cuid())
+  unit            Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId          String
+  title           String
+  markdownContent String
+  order           Int
+
+  @@index([unitId, order])
+}
+
+model TestGroup {
+  id     String     @id @default(cuid())
+  unit   Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId String
+  name   String
+  order  Int
+  weight Int        @default(1)
+  cases  TestCase[]
+
+  @@unique([unitId, name])
+  @@index([unitId, order])
+}
+
+// TestCase rows are upserted lazily on the first submission that surfaces
+// the case (we cannot enumerate them at ingest time — the test_runner.py
+// decides which IDs to emit). `extId` is the harness's stable test_id.
+model TestCase {
+  id          String  @id @default(cuid())
+  testGroup   TestGroup @relation(fields: [testGroupId], references: [id], onDelete: Cascade)
+  testGroupId String
+  extId       String
+  name        String
+  description String?
+  hint        String?
+
+  results SubmissionTestResult[]
+
+  @@unique([testGroupId, extId])
+}
+
+// ----------------------------------------------------------------------------
+// Progress + submissions
+// ----------------------------------------------------------------------------
+
+model UnitProgress {
+  id          String             @id @default(cuid())
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  unit        Unit               @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId      String
+  status      UnitProgressStatus @default(LOCKED)
+  completedAt DateTime?
+
+  @@unique([userId, unitId])
+  @@index([userId])
+}
+
+model Submission {
+  id        String           @id @default(cuid())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  unit      Unit             @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId    String
+  status    SubmissionStatus @default(QUEUED)
+  zipHash   String
+  report    Json?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  results SubmissionTestResult[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([unitId])
+}
+
+model SubmissionTestResult {
+  id           String     @id @default(cuid())
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
+  testCase     TestCase   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testCaseId   String
+  status       TestStatus
+  detail       String?
+  runtimeMs    Int?
+
+  @@index([submissionId])
+}
