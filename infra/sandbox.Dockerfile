@@ -24,10 +24,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Minimal runtime deps for test execution + common student-code patterns.
 # Pinned so rebuilds are reproducible; bumped explicitly when we want them.
+# Course-specific deps (requests / openai / python-dotenv) are baked in
+# because --network=none prevents pip install at run time. If a future unit
+# needs another package, add it here and rebuild via `make sandbox`.
 RUN pip install --no-cache-dir \
         pytest==8.3.3 \
         pydantic==2.9.2 \
-        anthropic==0.39.0
+        anthropic==0.39.0 \
+        requests==2.32.3 \
+        openai==1.54.4 \
+        python-dotenv==1.0.1
 
 # Non-root runtime user (00_MASTER_PROMPT.md §2.4 requires uid 1001).
 # nologin shell = no interactive sessions possible. uid 1001 is in the regular
