@@ -1,0 +1,33 @@
+# IAU AI Platform — Caddy reverse proxy (dev-friendly)
+#
+# In dev/local we listen on :80 and reverse-proxy to the app service.
+# For production with a real domain, replace `:80` with the domain name
+# (e.g. `iau.example.com`) and Caddy will auto-provision TLS via ACME.
+
+{
+	# Global options
+	auto_https off
+	admin off
+}
+
+:80 {
+	encode gzip
+
+	# Basic security headers
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Reverse proxy to the app service on the public_net network.
+	# In Faz 1.2 `app` is an nginx:alpine placeholder listening on :80;
+	# once the real Next.js app is up, the upstream port will change to :3000.
+	reverse_proxy app:80
+
+	log {
+		output stdout
+		format console
+	}
+}
