@@ -8,11 +8,23 @@
     "node": ">=22.6.0"
   },
   "scripts": {
+    "prisma:generate": "prisma generate --schema ../app/prisma/schema.prisma",
     "test": "node --test --experimental-strip-types --no-warnings=ExperimentalWarning tests/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/server.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "adm-zip": "^0.5.16",
+    "express": "^4.21.1",
+    "p-limit": "^6.1.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/express": "^5.0.0",
     "@types/node": "^22.9.0",
+    "prisma": "^5.22.0",
     "typescript": "^5.6.3"
   }
 }
