@@ -4,7 +4,7 @@
 # Assumes a populated `.env` in the project root (copy .env.example first).
 
 .PHONY: start stop logs status reset clean sandbox sandbox-test \
-        migrate-build migrate ingest ingest-dry
+        migrate-build migrate ingest ingest-dry promote-admin
 
 start:
 	docker compose up -d --build
@@ -78,3 +78,12 @@ ingest: sandbox
 ingest-dry: sandbox
 	cd app && DATABASE_URL=$$(grep '^LOCAL_DATABASE_URL=' ../.env | cut -d= -f2-) \
 	  npm run ingest:dry-run
+
+# Promote a user to ADMIN. There is no UI flow for the FIRST admin (the
+# user list is admin-only), so this is the bootstrap. Usage:
+#   make promote-admin EMAIL=ismaildeniz@example.com
+promote-admin:
+	@if [ -z "$(EMAIL)" ]; then echo "Usage: make promote-admin EMAIL=user@example.com" >&2; exit 1; fi
+	docker compose exec postgres psql -U $$(grep '^POSTGRES_USER=' .env | cut -d= -f2-) \
+	  -d $$(grep '^POSTGRES_DB=' .env | cut -d= -f2-) \
+	  -c "UPDATE \"User\" SET role='ADMIN' WHERE email='$(EMAIL)' RETURNING id, email, role;"

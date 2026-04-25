@@ -21,10 +21,8 @@
 		-Server
 	}
 
-	# Reverse proxy to the app service on the public_net network.
-	# In Faz 1.2 `app` is an nginx:alpine placeholder listening on :80;
-	# once the real Next.js app is up, the upstream port will change to :3000.
-	reverse_proxy app:80
+	# Reverse proxy to the Next.js app on the public_net network.
+	reverse_proxy app:3000
 
 	log {
 		output stdout
