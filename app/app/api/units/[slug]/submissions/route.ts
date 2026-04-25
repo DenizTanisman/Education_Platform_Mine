@@ -19,7 +19,7 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
   const { slug } = await params;
-  const unit = await getUnitForUser(user.id, slug);
+  const unit = await getUnitForUser(user.id, slug, user.role);
   if (!unit) return NextResponse.json({ error: "unit_not_found_or_locked" }, { status: 404 });
 
   const form = await req.formData().catch(() => null);

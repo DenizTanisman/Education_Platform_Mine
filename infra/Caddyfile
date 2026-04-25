@@ -13,15 +13,24 @@
 :80 {
 	encode gzip
 
-	# Basic security headers
+	# Basic security headers. SAMEORIGIN (not DENY) on X-Frame-Options so the
+	# education page's own /pdfs/<slug>.pdf iframe renders.
 	header {
 		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
+		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		-Server
 	}
 
-	# Reverse proxy to the Next.js app on the public_net network.
+	# Static-serve education PDFs out of the app/public/pdfs bind mount.
+	# Next.js standalone output does NOT serve public/ files; doing it here
+	# is faster anyway (no Node hop, native file streaming).
+	handle_path /pdfs/* {
+		root * /srv/pdfs
+		file_server
+	}
+
+	# Reverse proxy everything else to the Next.js app.
 	reverse_proxy app:3000
 
 	log {

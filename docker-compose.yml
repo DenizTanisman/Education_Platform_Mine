@@ -26,6 +26,8 @@ services:
       - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+      # PDFs are served directly by Caddy under /pdfs/* — see Caddyfile.
+      - ./app/public/pdfs:/srv/pdfs:ro
     networks:
       - public_net
     depends_on:
