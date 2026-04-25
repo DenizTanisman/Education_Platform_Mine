@@ -13,6 +13,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Runner is a separate npm package; emit a second client into its
+// node_modules/.prisma/client/ so the @prisma/client wrapper installed in
+// runner/ resolves to it via the standard "automatically forwarded" path.
+generator runnerClient {
+  provider = "prisma-client-js"
+  output   = "../../runner/node_modules/.prisma/client"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")

@@ -14,9 +14,9 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** 3.2 + 3.3 — Content ingest + make ingest (tamam)
-- **Branch:** `feat/content-ingest` (chained on `feat/prisma-schema`)
-- **Faz 1 + Faz 2 → main, `phase-1-complete` ve `phase-2-complete` tag'ları pushed.
+- **Alt-task:** Faz 4.1-4.4 — Runner HTTP service (tamam, tek branch)
+- **Branch:** `feat/runner-service`
+- **Faz 1 + 2 + 3 → main, `phase-{1,2,3}-complete` tag'ları pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
 ## Son durum notları
@@ -87,7 +87,20 @@
   - `make ingest` / `make ingest-dry`: HOST'tan koşar (docker-in-docker path
     translation derdi yok). Postgres `127.0.0.1:5433`'te loopback exposure.
 
+- Faz 3 → main, `phase-3-complete` tag pushed.
+- Faz 4.1-4.4 tamamlandı: `runner/src/{server,queue,runner-core,db}.ts` —
+  Express + Zod + p-limit (4 concurrent / 10 queued / 429 beyond), shared
+  secret middleware (`x-runner-secret`, constant-time), 10MB JSON body cap,
+  graceful shutdown 30s drain. End-to-end: ZIP extract → sandbox call →
+  Prisma transaction (Submission + SubmissionTestResult, lazy TestCase
+  upsert by extId) → UnitProgress unlock-next-on-pass. `app/prisma/schema.prisma`
+  ikinci generator block ile `runner/node_modules/.prisma/client/`'a da yazıyor
+  (npm workspace gerektirmeden cross-package prisma erişimi).
+  - `runner/tests/server.test.ts`: 4 HTTP/auth + 1 full E2E (real sandbox +
+    real Prisma write + UnitProgress verify) — 12/12 PASS toplamda
+    (sandbox-runner integration 6/6 + arg construction 2/2 + server 4/0).
+
 ## Bir sonraki adım
 
-Faz 3 sonu merge → Faz 4 — Runner HTTP service (`runner/src/server.ts`,
-Express, /run + /healthz, p-limit semaphore, Faz 4.4'te submission DB writes).
+Faz 4 sonu merge → Faz 5 — Auth (jose JWT + bcrypt cost 12, /api/{register,
+login,logout,me}, edge middleware, rate limit 5/h IP).
