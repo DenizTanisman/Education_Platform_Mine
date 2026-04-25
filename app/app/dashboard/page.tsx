@@ -8,7 +8,7 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/dashboard");
 
-  const units = await listUnitsForUser(user.id);
+  const units = await listUnitsForUser(user.id, user.role);
 
   return (
     <main>

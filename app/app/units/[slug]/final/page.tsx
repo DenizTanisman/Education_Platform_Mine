@@ -15,7 +15,7 @@ export default async function FinalPage({
   if (!user) redirect("/login");
 
   const { slug } = await params;
-  const unit = await getUnitForUser(user.id, slug);
+  const unit = await getUnitForUser(user.id, slug, user.role);
   if (!unit) notFound();
 
   return (

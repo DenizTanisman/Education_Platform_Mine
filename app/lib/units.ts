@@ -18,12 +18,17 @@ export interface UnitForDashboard {
 
 /**
  * Returns every published unit in `order` ascending, joined with the
- * caller's progress. The implicit unlock rule:
+ * caller's progress. Unlock rule:
+ *   - admins see everything as IN_PROGRESS (or COMPLETED if they already
+ *     finished it) — unrestricted access for content review and testing
  *   - the lowest-order unit is always at least IN_PROGRESS
  *   - a unit is unlocked once the previous one is COMPLETED
  *   - everything else is LOCKED until that gate opens
  */
-export async function listUnitsForUser(userId: string): Promise<UnitForDashboard[]> {
+export async function listUnitsForUser(
+  userId: string,
+  role: "STUDENT" | "ADMIN" = "STUDENT",
+): Promise<UnitForDashboard[]> {
   const [units, progress] = await Promise.all([
     prisma.unit.findMany({
       where: { published: true },
@@ -43,6 +48,7 @@ export async function listUnitsForUser(userId: string): Promise<UnitForDashboard
     const explicit = progressMap.get(u.id);
     const status: UnitStatus = (() => {
       if (explicit === "COMPLETED") return "COMPLETED";
+      if (role === "ADMIN") return "IN_PROGRESS";
       if (explicit === "IN_PROGRESS") return "IN_PROGRESS";
       if (prevCompleted) return "IN_PROGRESS";
       return "LOCKED";
@@ -55,6 +61,7 @@ export async function listUnitsForUser(userId: string): Promise<UnitForDashboard
 export async function getUnitForUser(
   userId: string,
   slug: string,
+  role: "STUDENT" | "ADMIN" = "STUDENT",
 ): Promise<{
   id: string;
   slug: string;
@@ -74,7 +81,7 @@ export async function getUnitForUser(
   });
   if (!unit || !unit.published) return null;
 
-  const all = await listUnitsForUser(userId);
+  const all = await listUnitsForUser(userId, role);
   const own = all.find((u) => u.id === unit.id);
   if (!own || own.status === "LOCKED") return null;
 
