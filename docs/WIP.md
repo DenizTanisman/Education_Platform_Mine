@@ -6,8 +6,8 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** 2.1 — Sandbox Dockerfile (tamam)
-- **Branch:** `feat/sandbox-dockerfile`
+- **Alt-task:** 2.2 — Seccomp profili (tamam)
+- **Branch:** `feat/sandbox-seccomp` (chained on `feat/sandbox-dockerfile`)
 - **Faz 1:** merged to `main`, `phase-1-complete` tag pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
@@ -29,8 +29,13 @@
 - Faz 2.1 tamamlandı: `infra/sandbox.Dockerfile` — Python 3.11-slim, uid 1001
   (regular, --system kaldırıldı SYS_UID_MAX warning için), pytest/pydantic/anthropic
   pin'li, ENTRYPOINT `python /workspace/harness.py`. 240MB. harness.py 2.3'te gelecek.
+- Faz 2.2 tamamlandı: `infra/seccomp.json` — moby v27.3.1 default base,
+  extra-deny list (ptrace/unshare/mount/umount/umount2/keyctl/bpf/userfaultfd/
+  clone3/reboot) hem ALLOW rule'larından çıkarıldı hem de en üste explicit
+  ERRNO block olarak eklendi. `scripts/test-seccomp.sh` control+test1+test2 geçti.
+  Gerekçeler `docs/sandbox-seccomp.md`'de.
 
 ## Bir sonraki adım
 
-Alt-task 2.2 — Seccomp profili (`infra/seccomp.json`, deny list: ptrace/unshare/
-mount/umount/keyctl/bpf/userfaultfd/clone3/reboot).
+Alt-task 2.3 — Harness.py (test runner, JSON output format per
+02_CONTENT_CONTRACT.md §3).
