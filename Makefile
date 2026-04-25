@@ -3,7 +3,7 @@
 # Common dev operations for the docker compose stack.
 # Assumes a populated `.env` in the project root (copy .env.example first).
 
-.PHONY: start stop logs status reset clean
+.PHONY: start stop logs status reset clean sandbox sandbox-test
 
 start:
 	docker compose up -d --build
@@ -33,3 +33,15 @@ reset:
 
 clean:
 	docker compose down --remove-orphans
+
+# Build the sandbox image used to execute student submissions.
+# Independent of the compose stack — only docker daemon required.
+sandbox:
+	docker build -t iau-sandbox:latest -f infra/sandbox.Dockerfile .
+
+# Run the bundled pass / fail / malicious examples through the sandbox.
+# Requires `make sandbox` first and runner/ deps installed (cd runner && npm install).
+sandbox-test:
+	./scripts/test-sandbox.sh pass
+	./scripts/test-sandbox.sh fail
+	./scripts/test-sandbox.sh malicious
