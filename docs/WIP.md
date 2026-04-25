@@ -14,8 +14,8 @@
 ## Aktif durum
 
 - **Faz:** Faz 2 — Sandbox Image + Harness
-- **Alt-task:** 3.1 — Prisma şeması + initial migration (tamam)
-- **Branch:** `feat/prisma-schema`
+- **Alt-task:** 3.2 + 3.3 — Content ingest + make ingest (tamam)
+- **Branch:** `feat/content-ingest` (chained on `feat/prisma-schema`)
 - **Faz 1 + Faz 2 → main, `phase-1-complete` ve `phase-2-complete` tag'ları pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
@@ -75,8 +75,19 @@
   (Caddy'nin postgres'i göremiyor olması) ama bir-off tooling container'ları
   prisma binary'lerini fetch edebilsin.
 
+- Faz 3.2 + 3.3 tamamlandı: `app/scripts/ingest-content.ts` — filename regex,
+  ZIP extraction (adm-zip), unit.yaml parse (yaml), required-files check,
+  reference solution sandbox check (runner CLI), Prisma upsert (Unit, Video,
+  Project, TestGroup; TestCase lazily on first submission). `--dry-run` flag.
+  Hatalı ZIP'ler `content/inbox/errors/<zip>.log`'a yazılır, geçenler
+  `processed/`'a taşınır.
+  - 13 unit testi (`app/scripts/ingest-content.test.ts`) geçti.
+  - End-to-end smoke: gerçek ZIP → ingest pipeline → sandbox PASS → DB'ye
+    Unit+TestGroup yazıldı, PDF kopyalandı, ZIP processed'a taşındı.
+  - `make ingest` / `make ingest-dry`: HOST'tan koşar (docker-in-docker path
+    translation derdi yok). Postgres `127.0.0.1:5433`'te loopback exposure.
+
 ## Bir sonraki adım
 
-Alt-task 3.2 — `scripts/ingest-content.ts`: `content/inbox/*.zip` discovery,
-şema validation (`unit-NN-slug.zip` regex, ZIP içi yapı), `pass_final.zip`
-otomatik runner'da test, başarılıysa `content/units/`'e açma + DB upsert.
+Faz 3 sonu merge → Faz 4 — Runner HTTP service (`runner/src/server.ts`,
+Express, /run + /healthz, p-limit semaphore, Faz 4.4'te submission DB writes).

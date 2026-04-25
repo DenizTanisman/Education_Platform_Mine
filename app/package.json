@@ -4,17 +4,29 @@
   "private": true,
   "type": "module",
   "description": "Next.js app + Prisma client for the IAU AI platform.",
+  "engines": {
+    "node": ">=20.6.0"
+  },
   "scripts": {
     "prisma": "prisma",
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
-    "generate": "prisma generate"
+    "generate": "prisma generate",
+    "ingest": "node --import tsx scripts/ingest-content.ts",
+    "ingest:dry-run": "node --import tsx scripts/ingest-content.ts --dry-run",
+    "test": "node --import tsx --test scripts/*.test.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "adm-zip": "^0.5.16",
+    "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "prisma": "^5.22.0"
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^22.9.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
   }
 }

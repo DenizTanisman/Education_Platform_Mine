@@ -74,9 +74,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - internal_net
-    # No host port published — postgres stays on internal_net only. Prisma
-    # migrations + studio run via `make migrate` / `make studio`, which spin
-    # up a one-off node container joined to the same compose network.
+    # Loopback host exposure for host-side tooling (prisma studio, ingest
+    # script, ad-hoc psql). Other containers still resolve postgres via the
+    # `postgres:5432` hostname over internal_net. Host port 5433 avoids
+    # colliding with a typical system postgres on 5432.
+    ports:
+      - "127.0.0.1:5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
