@@ -1,0 +1,37 @@
+order: 8
+slug: capstone
+title: "Capstone — Mini Jarvis"
+description: |
+  Önceki 7 modülün hepsini tek projede birleştiren capstone modülü.
+  Mini Jarvis: agent loop (M5) + memory (M6) + RAG (M7) + structured
+  output (M4) + async parallel (M3) + retry/error handling (M2) +
+  SQLite (M1) + disiplinli kod (M0). 6 tool'lu kişisel asistan:
+  remember_fact, recall_fact, search_memory, add_task, list_tasks,
+  search_documents. JarvisStore üç alt-store (memory, rag, tasks)
+  içeren composite. Final modül — kursun ustalık seviyesi.
+tags:
+  - capstone
+  - integration
+  - agent
+  - rag
+  - memory
+  - tools
+duration_minutes: 600
+published: true
+
+test_groups:
+  - name: "Çekirdek yapı"
+    weight: 2
+    order: 1
+  - name: "Doküman boru hattı"
+    weight: 2
+    order: 2
+  - name: "Tool registry"
+    weight: 2
+    order: 3
+  - name: "Agent loop"
+    weight: 3
+    order: 4
+  - name: "Bütünleşme"
+    weight: 3
+    order: 5

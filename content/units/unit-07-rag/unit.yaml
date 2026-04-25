@@ -1,0 +1,31 @@
+order: 7
+slug: rag
+title: "RAG ile Doküman Tabanlı Asistan"
+description: |
+  Retrieval-Augmented Generation (RAG): büyük dokümanları küçük parçalara
+  bölme (chunking with overlap), embedding ile vector index oluşturma,
+  query'e benzer chunk'ları cosine similarity ile çekme, LLM'e bu chunk'ları
+  context olarak verme. Citations ile şeffaf cevap üretme. M6'nın ad-hoc
+  semantic memory'sini production-ready RAG sistemine evrimleştiriyoruz.
+tags:
+  - rag
+  - retrieval
+  - chunking
+  - embeddings
+  - citations
+duration_minutes: 360
+published: true
+
+test_groups:
+  - name: "Chunking"
+    weight: 2
+    order: 1
+  - name: "Indeks ve arama"
+    weight: 2
+    order: 2
+  - name: "Embedding boru hattı"
+    weight: 2
+    order: 3
+  - name: "RAG cevaplama"
+    weight: 3
+    order: 4

@@ -42,15 +42,18 @@ env/
 # ---- Docker ----
 *.log
 
-# ---- Content (Deniz-owned, large files excluded from git) ----
-# Per 00_MASTER_PROMPT.md §9.6 and §9.7: structural files are committed,
-# but large binary content stays out of the repo.
+# ---- Content (Deniz-owned) ----
+# Per 00_MASTER_PROMPT.md §9.6/§9.7: as of Faz 8, structural files AND
+# the PDFs / processed ZIPs / reference solutions are tracked so a fresh
+# clone has everything to `make start` without a separate ingest pass.
+# Only the live drop-zone (`content/inbox/*.zip`) and error logs are
+# kept out — they're transient.
 content/inbox/*.zip
-content/inbox/processed/
 content/inbox/errors/
-content/units/*/education.pdf
-content/units/*/reference/
-app/public/pdfs/*.pdf
+
+# Raw course materials (Deniz's working folder before packaging into the
+# unit-NN-slug.zip contract format). Not needed by anything in the repo.
+Otomation_course_new/
 
 # ---- Prisma generated artifacts ----
 app/prisma/migrations/dev.db*

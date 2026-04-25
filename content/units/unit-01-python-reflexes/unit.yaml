@@ -1,0 +1,30 @@
+order: 1
+slug: python-reflexes
+title: "Python Otomasyon Refleksleri"
+description: |
+  Sanal ortam (venv), pip ve requirements.txt, .env dosyaları ile gizli
+  bilgi yönetimi, dosya I/O, argparse ile CLI yazma, sqlite3 ile basit
+  veritabanı, ve try/except ile hata yakalama. Modül sonunda öğrenci
+  SQLite tabanlı bir CLI todo aracı yazar.
+tags:
+  - python
+  - cli
+  - sqlite
+  - argparse
+  - automation
+duration_minutes: 300
+published: true
+
+test_groups:
+  - name: "Veritabanı işlemleri"
+    weight: 2
+    order: 1
+  - name: "Hata yönetimi"
+    weight: 1
+    order: 2
+  - name: "Argparse yapısı"
+    weight: 1
+    order: 3
+  - name: "JSON çıktı formatı"
+    weight: 1
+    order: 4

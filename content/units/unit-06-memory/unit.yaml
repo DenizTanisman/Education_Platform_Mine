@@ -1,0 +1,33 @@
+order: 6
+slug: memory
+title: "Memory ile Stateful Agent"
+description: |
+  M5'in stateless agent'ını üç katmanlı belleğe genişletiyoruz:
+  konuşma geçmişi (multi-turn messages), kullanıcı tercihleri (key-value
+  facts), ve embedding-based semantic memory (cosine similarity arama).
+  MemoryStore class'ı file-based JSON ile kalıcı saklama yapıyor. LLM,
+  remember_fact / recall_fact / search_memory tool'ları üzerinden kendi
+  belleğine erişiyor. text-embedding-3-small ile vektörleme, asyncio'lu
+  agent loop, multi-turn conversation persistence.
+tags:
+  - memory
+  - embeddings
+  - cosine-similarity
+  - stateful-agent
+  - persistence
+duration_minutes: 360
+published: true
+
+test_groups:
+  - name: "Bellek temelleri"
+    weight: 2
+    order: 1
+  - name: "Kalıcılık"
+    weight: 1
+    order: 2
+  - name: "Bellek araçları"
+    weight: 2
+    order: 3
+  - name: "Asistan döngüsü"
+    weight: 3
+    order: 4

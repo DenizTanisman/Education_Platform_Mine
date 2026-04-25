@@ -1,0 +1,32 @@
+order: 3
+slug: llm-sdk
+title: "LLM SDK ile Doğrudan Bağlantı"
+description: |
+  OpenAI Python SDK ile ilk LLM çağrısı. Sync vs async kullanım, mesaj
+  rolleri (system/user/assistant), model parametreleri (temperature,
+  max_tokens), AsyncOpenAI ile asyncio.gather kullanarak paralel çağrı.
+  Modülün sonunda öğrenci 10 başlığı paralel olarak özetleyen ve
+  süresini ölçen bir araç yazar. Anthropic SDK ile karşılaştırma
+  kutucukları paralel olarak verilir.
+tags:
+  - openai
+  - async
+  - llm
+  - asyncio
+  - mock-testing
+duration_minutes: 300
+published: true
+
+test_groups:
+  - name: "SDK çağrısı"
+    weight: 2
+    order: 1
+  - name: "Hata yönetimi"
+    weight: 1
+    order: 2
+  - name: "Async paralellik"
+    weight: 2
+    order: 3
+  - name: "Dosyaya kaydetme"
+    weight: 1
+    order: 4
