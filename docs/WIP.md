@@ -5,9 +5,10 @@
 
 ## Aktif durum
 
-- **Faz:** Faz 1 — Repo İskeleti
-- **Alt-task:** 1.3 — Makefile ve temel komutlar (tamam). Faz 1 bitti.
-- **Branch:** `feat/makefile` (pushed)
+- **Faz:** Faz 2 — Sandbox Image + Harness
+- **Alt-task:** 2.1 — Sandbox Dockerfile (tamam)
+- **Branch:** `feat/sandbox-dockerfile`
+- **Faz 1:** merged to `main`, `phase-1-complete` tag pushed.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
 ## Son durum notları
@@ -22,11 +23,14 @@
   postgres için izole, `public_net` sadece caddy için host'a açık.
 - Faz 1.3 tamamlandı: `Makefile` altı hedefle (`start/stop/logs/status/reset/clean`).
   `reset` "YES" confirm prompt'u ile korunuyor.
+- Faz 1 → `main`'e merged (PR #2 squash — feat/makefile feat/compose-skeleton'dan
+  branch'lendiği için her iki alt-task da tek squash'ta indi). PR #1 orphan,
+  kapatıldı. `phase-1-complete` tag pushed.
+- Faz 2.1 tamamlandı: `infra/sandbox.Dockerfile` — Python 3.11-slim, uid 1001
+  (regular, --system kaldırıldı SYS_UID_MAX warning için), pytest/pydantic/anthropic
+  pin'li, ENTRYPOINT `python /workspace/harness.py`. 240MB. harness.py 2.3'te gelecek.
 
 ## Bir sonraki adım
 
-Faz 1 tüm alt-task'ları bitti (1.1, 1.2, 1.3). §9.3 gereği faz sonu merge
-zamanı: `feat/compose-skeleton` ve `feat/makefile` branch'lerini `main`'e
-sırayla squash-merge + `phase-1-complete` tag. Deniz onayı bekleniyor.
-
-Sonra Faz 2 — Sandbox Image + Harness başlar.
+Alt-task 2.2 — Seccomp profili (`infra/seccomp.json`, deny list: ptrace/unshare/
+mount/umount/keyctl/bpf/userfaultfd/clone3/reboot).
