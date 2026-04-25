@@ -1,0 +1,56 @@
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Editor ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- Claude Code local ----
+.claude/settings.local.json
+
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ---- Env / secrets ----
+.env
+.env.local
+.env.*.local
+
+# ---- Docker ----
+*.log
+
+# ---- Content (Deniz-owned, large files excluded from git) ----
+# Per 00_MASTER_PROMPT.md §9.6 and §9.7: structural files are committed,
+# but large binary content stays out of the repo.
+content/inbox/*.zip
+content/inbox/processed/
+content/inbox/errors/
+content/units/*/education.pdf
+content/units/*/reference/
+app/public/pdfs/*.pdf
+
+# ---- Prisma generated artifacts ----
+app/prisma/migrations/dev.db*
