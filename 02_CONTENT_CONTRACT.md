@@ -1,67 +1,67 @@
 # IAU AI Platform — Content Delivery Contract
 
-> Bu doküman Deniz'in ünite içeriklerini platforma teslim ederken uyacağı
-> formatı tanımlar. Claude Code bu formatta gelen ZIP'leri otomatik işler.
+> This document defines the format Deniz follows when delivering unit content
+> to the platform. Claude Code processes ZIPs in this format automatically.
 >
-> **Temel prensip:** Deniz sadece `content/inbox/` dizinine ZIP atar.
-> Başka hiçbir yere dokunmaz. Claude Code asla `content/inbox/` içine yazmaz.
+> **Core principle:** Deniz only drops ZIPs into the `content/inbox/` directory.
+> He touches nothing else. Claude Code never writes into `content/inbox/`.
 
 ---
 
-## 1. GENEL ŞEMA
+## 1. GENERAL SCHEMA
 
-Her ünite tek bir ZIP olarak teslim edilir:
+Each unit is delivered as a single ZIP:
 
 ```
 content/inbox/unit-07-rag-pipeline.zip
 ```
 
-Dosya adı şu formata uymalı:
+The file name must match this format:
 - Prefix: `unit-`
-- Sıra numarası: `00`, `01`, `02`, ... (iki basamak)
-- Slug: kebab-case, İngilizce, alfanümerik + tire
-- Uzantı: `.zip`
+- Sequence number: `00`, `01`, `02`, ... (two digits)
+- Slug: kebab-case, English, alphanumeric + hyphen
+- Extension: `.zip`
 
 **Regex:** `^unit-\d{2}-[a-z0-9-]+\.zip$`
 
-**Geçerli örnekler:**
+**Valid examples:**
 - `unit-00-welcome.zip`
 - `unit-01-python-basics.zip`
 - `unit-07-rag-pipeline.zip`
 
-**Geçersiz örnekler:**
-- `unit-7-rag.zip` (tek basamak)
-- `unit-01-RAG Pipeline.zip` (boşluk, büyük harf)
-- `ünite-01.zip` (ASCII olmayan)
+**Invalid examples:**
+- `unit-7-rag.zip` (single digit)
+- `unit-01-RAG Pipeline.zip` (space, uppercase)
+- `ünite-01.zip` (non-ASCII)
 
 ---
 
-## 2. ZIP İÇİ DİZİN YAPISI (zorunlu)
+## 2. DIRECTORY STRUCTURE INSIDE THE ZIP (required)
 
 ```
 unit-07-rag-pipeline.zip
-├── unit.yaml                    # ZORUNLU — ünite metadata
-├── education.pdf                # ZORUNLU — ders notları
-├── projects.md                  # ZORUNLU — proje talimatları (markdown)
+├── unit.yaml                    # REQUIRED — unit metadata
+├── education.pdf                # REQUIRED — lecture notes
+├── projects.md                  # REQUIRED — project instructions (markdown)
 ├── tests/
-│   └── test_runner.py           # ZORUNLU — harness uyumlu test dosyası
+│   └── test_runner.py           # REQUIRED — harness-compatible test file
 ├── reference/
-│   └── pass_final.zip           # ZORUNLU — geçen referans çözüm
-└── videos.yaml                  # OPSIYONEL — YouTube video listesi
+│   └── pass_final.zip           # REQUIRED — passing reference solution
+└── videos.yaml                  # OPTIONAL — YouTube video list
 ```
 
-### 2.1. unit.yaml (zorunlu)
+### 2.1. unit.yaml (required)
 
 ```yaml
-order: 7                         # integer, sıra
-slug: rag-pipeline               # dosya adındakiyle eşleşmeli
-title: RAG Pipeline              # insan-okuru başlık
-description: |                   # kısa açıklama (max 500 char)
+order: 7                         # integer, sequence
+slug: rag-pipeline               # must match the one in the file name
+title: RAG Pipeline              # human-readable title
+description: |                   # short description (max 500 chars)
   Retrieval Augmented Generation temelleri. Document loader, embeddings,
   vector search ve cevap sentezi.
-tags: [rag, embeddings, vector-search]   # opsiyonel
-duration_minutes: 180            # tahmini öğrenme süresi
-published: true                  # false ise ingest DB'ye yazar ama UI'da gizli
+tags: [rag, embeddings, vector-search]   # optional
+duration_minutes: 180            # estimated learning time
+published: true                  # if false, ingest writes to the DB but it is hidden in the UI
 test_groups:
   - name: Document loader
     weight: 1
@@ -74,21 +74,21 @@ test_groups:
     order: 3
 ```
 
-### 2.2. education.pdf (zorunlu)
+### 2.2. education.pdf (required)
 
-- Format: PDF (A4 veya Letter)
-- Max boyut: 20 MB
-- İçerik: ders notları, şemalar, örnekler
+- Format: PDF (A4 or Letter)
+- Max size: 20 MB
+- Content: lecture notes, diagrams, examples
 
-### 2.3. projects.md (zorunlu)
+### 2.3. projects.md (required)
 
 - Format: GitHub Flavored Markdown
-- `react-markdown` ile render edilecek
-- İçerik: öğrencinin **lokalinde** yapması gereken pratik görevler
-- ZIP'e koyacağı dosya yapısını burada netleştir
-- Max 500 satır
+- Rendered with `react-markdown`
+- Content: practical tasks the student must do **locally**
+- Make the file structure they will put in the ZIP explicit here
+- Max 500 lines
 
-Önerilen yapı:
+Suggested structure (the sample is in Turkish, like the course content):
 
 ```markdown
 # Unit 7 — RAG Pipeline
@@ -124,25 +124,25 @@ submission.zip
 ```
 ```
 
-### 2.4. tests/test_runner.py (zorunlu)
+### 2.4. tests/test_runner.py (required)
 
-Harness bu dosyayı import eder. Şu kontratı takip eder:
+The harness imports this file. It follows this contract:
 
 ```python
 # content/inbox/.../tests/test_runner.py
 
 from harness_api import TestResult, TestGroup, register
 
-# Student code'u import etmek için sys.path'e /workspace/code eklenir
-# (harness.py bunu otomatik yapar)
+# /workspace/code is added to sys.path to import the student code
+# (harness.py does this automatically)
 import sys
 sys.path.insert(0, '/workspace/code')
 
 
 def run_tests() -> list[TestGroup]:
     """
-    Harness bu fonksiyonu çağırır. Her TestGroup, unit.yaml'daki
-    test_groups'tan biriyle 'name' alanı üzerinden eşleşmeli.
+    The harness calls this function. Each TestGroup must match one of the
+    test_groups in unit.yaml via the 'name' field.
     """
     groups = []
 
@@ -182,30 +182,30 @@ def run_tests() -> list[TestGroup]:
     return groups
 ```
 
-**Kurallar:**
-- Her TestResult'ın `id`'si unique, snake_case, prefix `test_`
+**Rules:**
+- Each TestResult's `id` is unique, snake_case, prefixed with `test_`
 - `status` ∈ `{passed, failed, errored, timeout}`
-- `failed` ise `expected` + `actual` zorunlu, `input` + `hint` opsiyonel
-- `errored` ise `detail` zorunlu (exception mesajı, stack trace değil)
-- `hint` öğrenciye gösterilir, net ve kısa olsun
-- Her test 2 saniyede bitmeli (harness timeout)
+- If `failed`, `expected` + `actual` are required, `input` + `hint` optional
+- If `errored`, `detail` is required (the exception message, not a stack trace)
+- `hint` is shown to the student; keep it clear and short
+- Each test must finish within 2 seconds (harness timeout)
 
-### 2.5. reference/pass_final.zip (zorunlu)
+### 2.5. reference/pass_final.zip (required)
 
-Bu ZIP **öğrencinin yükleyeceği** çözümün referans versiyonudur.
+This ZIP is the reference version of the solution **the student will upload**.
 
-**Amaçları:**
-- Ingest sırasında otomatik test edilir → `pass_final.zip` gerçekten geçiyor mu
-- Admin UI'da "referans çözüm" olarak görüntülenebilir (opsiyonel)
-- Deniz testini yerel olarak yaparken kullanır
+**Purposes:**
+- Automatically tested during ingest → does `pass_final.zip` actually pass
+- Can be shown as the "reference solution" in the admin UI (optional)
+- Used by Deniz when testing locally
 
-**Şema:**
+**Schema:**
 ```
 pass_final.zip
-└── <projects.md'de belirtilen dosya yapısı>
+└── <file structure specified in projects.md>
 ```
 
-Örnek:
+Example:
 ```
 pass_final.zip
 ├── loader.py
@@ -213,10 +213,10 @@ pass_final.zip
 └── pipeline.py
 ```
 
-**Kural:** Ingest script bu ZIP'i otomatik olarak sandbox'a submit eder.
-Eğer tüm testler PASS dönmezse **ingest başarısız olur**, ünite DB'ye yazılmaz.
+**Rule:** The ingest script automatically submits this ZIP to the sandbox.
+If not all tests return PASS, **ingest fails** and the unit is not written to the DB.
 
-### 2.6. videos.yaml (opsiyonel)
+### 2.6. videos.yaml (optional)
 
 ```yaml
 videos:
@@ -232,7 +232,7 @@ videos:
 
 ---
 
-## 3. HARNESS JSON ÇIKTI ŞEMASI (referans)
+## 3. HARNESS JSON OUTPUT SCHEMA (reference)
 
 `test_runner.py` → `harness.py` → stdout:
 
@@ -283,106 +283,106 @@ videos:
 ```
 
 `verdict`:
-- `"passed"` → tüm testler passed
-- `"failed"` → en az bir test failed/errored/timeout
+- `"passed"` → all tests passed
+- `"failed"` → at least one test failed/errored/timed out
 
 ---
 
-## 4. DENİZ'İN HAZIRLIK WORKFLOW'U
+## 4. DENIZ'S PREPARATION WORKFLOW
 
-Her ünite için izlenecek sıra:
+Order to follow for each unit:
 
-1. **Çalışma dizini aç** (`~/scratch/unit-XX-slug/`)
-2. **unit.yaml** yaz
-3. **education.pdf** hazırla (veya mevcut materyalden dönüştür)
-4. **projects.md** yaz — öğrenciye rehberlik eden görev listesi
-5. **reference çözümü yaz** (`reference/pass_final/` klasöründe `.py` dosyaları)
-6. **tests/test_runner.py** yaz — reference çözümü bu testlerden geçmeli
-7. **Yerel test:**
+1. **Open a working directory** (`~/scratch/unit-XX-slug/`)
+2. Write **unit.yaml**
+3. Prepare **education.pdf** (or convert from existing material)
+4. Write **projects.md** — the task list that guides the student
+5. **Write the reference solution** (`.py` files in the `reference/pass_final/` folder)
+6. Write **tests/test_runner.py** — the reference solution must pass these tests
+7. **Local test:**
    ```bash
    cd ~/scratch/unit-XX-slug
    cd reference && zip -r ../reference/pass_final.zip .
    cd ..
-   # Lokal harness çalıştır
+   # Run the local harness
    python /path/to/platform/scripts/test-unit-locally.py .
-   # → "all tests passed: 12/12" görmelisin
+   # → you should see "all tests passed: 12/12"
    ```
-8. **ZIP paketle:**
+8. **Package the ZIP:**
    ```bash
    cd ~/scratch
    zip -r unit-XX-slug.zip unit-XX-slug/
    ```
-9. **Kapıya bırak:**
+9. **Drop it at the door:**
    ```bash
    cp unit-XX-slug.zip /path/to/platform/content/inbox/
    ```
-10. **Ingest tetikle:**
+10. **Trigger ingest:**
     ```bash
     make ingest
     ```
-11. **Doğrula:**
-    - Terminal çıktısı "unit-XX ingested" gösterir
-    - `npx prisma studio` → Unit tablosunda yeni row
-    - UI'da `http://localhost/dashboard` → ünite görünür
-    - Reference solution otomatik test edilir → tüm testler PASS
+11. **Verify:**
+    - Terminal output shows "unit-XX ingested"
+    - `npx prisma studio` → new row in the Unit table
+    - In the UI, `http://localhost/dashboard` → the unit is visible
+    - Reference solution is tested automatically → all tests PASS
 
-12. **Hata durumu:**
-    - `content/inbox/errors/unit-XX-slug.log` dosyasında hata detayı
-    - ZIP `content/inbox/` içinde kalır, yeniden denenebilir
-    - Düzelt → yeniden at → `make ingest`
+12. **On error:**
+    - Error details in `content/inbox/errors/unit-XX-slug.log`
+    - The ZIP stays in `content/inbox/` and can be retried
+    - Fix → drop again → `make ingest`
 
 ---
 
-## 5. TESLİMATTAN SONRA NE OLUR (Claude Code'un işi)
+## 5. WHAT HAPPENS AFTER DELIVERY (Claude Code's job)
 
-Ingest script şu adımları izler:
+The ingest script follows these steps:
 
-1. `content/inbox/unit-XX-slug.zip` tespit edilir
-2. Şema validation (bu dokümandaki kurallar)
-3. Geçici dizine açılır (`/tmp/ingest-<uuid>/`)
-4. `unit.yaml` parse edilir
-5. `reference/pass_final.zip` otomatik sandbox'a submit edilir
-6. Tüm testler PASS değilse → HATA, `content/inbox/errors/` klasörüne log
-7. PASS ise:
-   - `content/units/unit-XX-slug/` klasörüne yerleştirilir
+1. `content/inbox/unit-XX-slug.zip` is detected
+2. Schema validation (the rules in this document)
+3. Extracted to a temporary directory (`/tmp/ingest-<uuid>/`)
+4. `unit.yaml` is parsed
+5. `reference/pass_final.zip` is automatically submitted to the sandbox
+6. If not all tests PASS → ERROR, log to the `content/inbox/errors/` folder
+7. If PASS:
+   - Placed into the `content/units/unit-XX-slug/` folder
    - `education.pdf` → `app/public/pdfs/unit-XX-slug.pdf`
    - DB upsert: Unit, Video, Project, TestGroup, TestCase
-   - ZIP `content/inbox/processed/` klasörüne taşınır
-8. Başarı mesajı terminal'e yazılır
+   - ZIP is moved to the `content/inbox/processed/` folder
+8. A success message is written to the terminal
 
 ---
 
-## 6. GÜNCELLEME SENARYOSU
+## 6. UPDATE SCENARIO
 
-Deniz bir üniteyi düzeltmek isterse:
+If Deniz wants to fix a unit:
 
-1. Yeni ZIP hazırla (aynı slug, aynı order)
-2. `content/inbox/` içine at
+1. Prepare a new ZIP (same slug, same order)
+2. Drop it into `content/inbox/`
 3. `make ingest`
-4. Script: order + slug eşleşmesi varsa **upsert** yapar
-5. `published: false` yaparsan UI'dan gizlenir ama veriler korunur
-6. Tamamen silmek istersen admin UI'dan manuel silme (v2)
+4. Script: if order + slug match, it performs an **upsert**
+5. Setting `published: false` hides it from the UI but keeps the data
+6. To delete it completely, delete manually from the admin UI (v2)
 
-**Önemli:** Aynı slug + farklı order kombinasyonu yasak. Bu durumda script
-hata verir ve eski değeri korur.
-
----
-
-## 7. YASAKLAR
-
-- ❌ `content/inbox/` içine `.py` veya `.md` gibi düz dosya atmak (her şey ZIP)
-- ❌ ZIP içinde symbolic link
-- ❌ ZIP içinde `.exe`, `.sh`, `.bat` dosyaları
-- ❌ `__MACOSX/`, `.DS_Store` (tolere edilir ama uyarı)
-- ❌ `test_runner.py` dışında `.py` dosyası `tests/` altında (harness import confliği)
-- ❌ Kişisel bilgi (isim, email, telefon) unit.yaml veya projects.md'de
-- ❌ Test case'lerde hardcoded path (`C:\Users\...`)
+**Important:** The same slug with a different order is forbidden. In that case the
+script errors out and keeps the old value.
 
 ---
 
-## 8. MINI REFERENCE — ÖRNEK ZIP İÇERİĞİ
+## 7. PROHIBITED
 
-Çalışır minimal bir örnek:
+- ❌ Dropping loose files like `.py` or `.md` into `content/inbox/` (everything is a ZIP)
+- ❌ Symbolic links inside the ZIP
+- ❌ `.exe`, `.sh`, `.bat` files inside the ZIP
+- ❌ `__MACOSX/`, `.DS_Store` (tolerated, but with a warning)
+- ❌ Any `.py` file under `tests/` other than `test_runner.py` (harness import conflict)
+- ❌ Personal information (name, email, phone) in unit.yaml or projects.md
+- ❌ Hardcoded paths in test cases (`C:\Users\...`)
+
+---
+
+## 8. MINI REFERENCE — SAMPLE ZIP CONTENTS
+
+A minimal working example:
 
 ```
 unit-00-welcome.zip
@@ -434,7 +434,7 @@ def run_tests():
     return [g]
 ```
 
-`reference/pass_final.zip` içi:
+Contents of `reference/pass_final.zip`:
 ```
 pass_final.zip
 └── solution.py
@@ -446,5 +446,5 @@ def greet(name: str) -> str:
     return f"Hello, {name}!"
 ```
 
-Bu örnek işler: `make ingest` → DB'ye Unit-0 gelir, kullanıcılar
-erişebilir, öğrenci `solution.py` yazar → ZIP atar → PASS alır.
+This example works: `make ingest` → Unit-0 lands in the DB, users can
+access it, the student writes `solution.py` → drops a ZIP → gets a PASS.

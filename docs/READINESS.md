@@ -47,7 +47,7 @@ The first `make start` builds the `iau-app` and `iau-runner` images
 (~5 min combined on a cold machine). Subsequent runs are seconds.
 
 Caddy listens on `:80`. Open <http://localhost> — the home page renders
-with `Giriş yap / Kayıt ol`.
+with `Giriş yap / Kayıt ol` (Log in / Sign up).
 
 ## 3. Smoke flows
 
@@ -56,7 +56,7 @@ with `Giriş yap / Kayıt ol`.
 1. Visit `/register`, create an account.
 2. You land on `/dashboard`. Empty unit list is expected on a fresh DB.
 3. Hit `/api/me` directly: returns your user JSON.
-4. Click `Çıkış`. `/dashboard` then redirects to `/login`.
+4. Click `Çıkış` (Log out). `/dashboard` then redirects to `/login`.
 
 ### 3.2 Promote yourself to admin
 

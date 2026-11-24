@@ -1,340 +1,339 @@
 # IAU AI Platform — Master Prompt for Claude Code
 
-> **Bu dosya Claude Code'un her session başlangıcında OKUMASI ZORUNLU olan kontrattır.**
-> Kural ihlali proje bozulmasına yol açar. Kurallara uymadığın durumda çalışmayı
-> durdur ve kullanıcıya sor.
+> **This file is the contract that Claude Code MUST READ at the start of every session.**
+> Breaking a rule breaks the project. If you cannot follow the rules, stop
+> working and ask the user.
 
 ---
 
-## 1. PROJE KİMLİĞİ
+## 1. PROJECT IDENTITY
 
-- **Proje adı:** IAU AI Online Kurs Platformu (v3)
-- **Amaç:** Öğrencilerin yapay zekayı ünite ünite öğrendiği, her ünitenin sonunda
-  otomatik test edilen bir Python kodu yüklediği eğitim platformu.
+- **Project name:** IAU AI Online Course Platform (v3)
+- **Goal:** An education platform where students learn AI unit by unit and, at the end
+  of each unit, upload Python code that is tested automatically.
 - **Stack:** Next.js 16 + Prisma 7 + PostgreSQL 16 + Docker sandbox + Caddy
-- **Platform:** Docker Compose ile tek host üzerinde çalışır.
-- **Kritik farklar (v2.2 → v3):**
-  - Cooldown YOK (sınırsız deneme)
-  - Redis YOK (in-memory semaphore yeterli, <20 eşzamanlı)
-  - gVisor YOK (standart Docker + seccomp + cap-drop yeterli)
-  - Per-test detaylı feedback (expected vs actual)
-  - Content-as-code (content/units/ klasörü, discover script)
+- **Platform:** Runs on a single host with Docker Compose.
+- **Key differences (v2.2 → v3):**
+  - NO cooldown (unlimited attempts)
+  - NO Redis (an in-memory semaphore is enough, <20 concurrent)
+  - NO gVisor (standard Docker + seccomp + cap-drop is enough)
+  - Detailed per-test feedback (expected vs actual)
+  - Content-as-code (content/units/ folder, discover script)
 
 ---
 
-## 2. MUTLAK SINIRLAR — İHLAL ETME
+## 2. HARD LIMITS — DO NOT VIOLATE
 
-### 2.1. Dizin Sahipliği (OWNERSHIP BOUNDARIES)
+### 2.1. Directory Ownership (OWNERSHIP BOUNDARIES)
 
 ```
 iau_platform/
-├── app/              ← CLAUDE CODE sahibi. Next.js kodu buraya.
-├── runner/           ← CLAUDE CODE sahibi. Runner servisi buraya.
-├── infra/            ← CLAUDE CODE sahibi. docker-compose, Caddyfile, Makefile, seccomp.json
-├── scripts/          ← CLAUDE CODE sahibi. DB scripts, ingest, cleanup
-├── docs/             ← CLAUDE CODE sahibi. Teknik dökümanlar, self-test MD'leri
+├── app/              ← Owned by CLAUDE CODE. Next.js code goes here.
+├── runner/           ← Owned by CLAUDE CODE. Runner service goes here.
+├── infra/            ← Owned by CLAUDE CODE. docker-compose, Caddyfile, Makefile, seccomp.json
+├── scripts/          ← Owned by CLAUDE CODE. DB scripts, ingest, cleanup
+├── docs/             ← Owned by CLAUDE CODE. Technical docs, self-test MDs
 │
-├── content/          ← DENİZ sahibi. CLAUDE CODE DOKUNMAZ.
-│   ├── inbox/        ← Deniz teslim kapısı — yeni içerik buraya atılır
-│   └── units/        ← Aktif ünite içerikleri — ingest script yerleştirir
+├── content/          ← Owned by DENIZ. CLAUDE CODE DOES NOT TOUCH IT.
+│   ├── inbox/        ← Deniz's delivery gate — new content is dropped here
+│   └── units/        ← Active unit content — placed by the ingest script
 │
-├── .env              ← DENİZ sahibi. Claude Code sadece .env.example yazabilir.
-└── .env.example      ← CLAUDE CODE yazabilir
+├── .env              ← Owned by DENIZ. Claude Code may only write .env.example.
+└── .env.example      ← CLAUDE CODE may write
 ```
 
-**KURAL:** Claude Code asla `content/` dizinine, `.env` dosyasına, veya
-bu dosyanın (`00_MASTER_PROMPT.md`) kendisine yazmaz. Sadece Deniz bu
-dosyaları değiştirebilir.
+**RULE:** Claude Code never writes to the `content/` directory, the `.env` file, or
+this file itself (`00_MASTER_PROMPT.md`). Only Deniz may change these
+files.
 
-Eğer Claude Code yeni bir dizin yaratma ihtiyacı duyarsa, önce sorar. Yaratma
-sonrası bu dokümanın §2.1 bölümüne eklenecek satırı Deniz'e bildirir.
+If Claude Code needs to create a new directory, it asks first. After creating it,
+it tells Deniz the line to add to §2.1 of this document.
 
-### 2.2. Faz Disiplini
+### 2.2. Phase Discipline
 
-Claude Code herhangi bir anda **TEK BİR FAZ** üzerinde çalışır (bkz. 01_BUILD_PLAN.md).
-- Faz tamamlanmadan bir sonraki faza geçilmez.
-- Faz içinde alt-task'lar sırayla yapılır. Alt-task atlanmaz.
-- Her alt-task bitince Deniz onayı beklenir.
-- Onay gelmeden bir sonraki alt-task'a geçilmez.
+Claude Code works on **ONE PHASE** at any given time (see 01_BUILD_PLAN.md).
+- Do not move to the next phase before the current one is complete.
+- Sub-tasks within a phase are done in order. No sub-task is skipped.
+- After each sub-task, wait for Deniz's approval.
+- Do not move to the next sub-task without approval.
 
-### 2.3. Test-First Kural
+### 2.3. Test-First Rule
 
-- Her yeni kod dosyası, yanında o dosyayı test eden bir self-check içerir:
-  - Manuel komut (örn: `docker compose exec app npm run check:auth`)
-  - Veya otomatize test (Jest, Vitest, pytest)
-- Çalışmayan kod commit edilmez. "TODO" içeren kod commit edilmez.
+- Every new code file comes with a self-check that tests it:
+  - A manual command (e.g. `docker compose exec app npm run check:auth`)
+  - Or an automated test (Jest, Vitest, pytest)
+- Non-working code is not committed. Code containing "TODO" is not committed.
 
-### 2.4. Güvenlik Sabitleri (GÜVENLİK PROTOKOLÜ'ne uyum)
+### 2.4. Security Constants (compliance with the SECURITY PROTOCOL)
 
-- Hardcoded secret YOK. Her şey `process.env.XXX` üzerinden.
-- SQL string concat YOK. Prisma ORM kullanılır.
-- Parola hash: bcrypt cost 12. md5/sha1 kesinlikle yasak.
-- User input: validate + sanitize. Zod şemaları kullanılır.
-- CORS wildcard YOK. Whitelist.
-- Debug=false production. Stack trace kullanıcıya gösterilmez.
-- Her endpoint auth middleware ile korunur (public olanlar hariç, explicit whitelist).
+- NO hardcoded secrets. Everything goes through `process.env.XXX`.
+- NO SQL string concatenation. Prisma ORM is used.
+- Password hashing: bcrypt cost 12. md5/sha1 strictly forbidden.
+- User input: validate + sanitize. Zod schemas are used.
+- NO CORS wildcard. Whitelist.
+- Debug=false in production. Stack traces are never shown to the user.
+- Every endpoint is protected by auth middleware (except public ones, via an explicit whitelist).
 - Sandbox: `--network=none`, `--read-only`, `--cap-drop=ALL`,
   `--security-opt=no-new-privileges`, `--security-opt=seccomp=<profile>`,
   `--pids-limit=64`, memory 512MB, CPU 0.5, timeout 10s.
-- Rate limiting tüm public endpoint'lerde (in-memory, sliding window).
-- Her endpoint Zod ile input validation.
-- Yüklenen ZIP için: size limit, decompressed size limit, file count limit,
-  allowed extensions whitelist, path traversal kontrolü.
+- Rate limiting on all public endpoints (in-memory, sliding window).
+- Zod input validation on every endpoint.
+- For uploaded ZIPs: size limit, decompressed size limit, file count limit,
+  allowed extensions whitelist, path traversal check.
 
-### 2.5. Geliştirme Disiplini
+### 2.5. Development Discipline
 
-- Ana branch (`main`) her zaman çalışır durumda olmalıdır.
-- Yeni özellik → yeni branch (`feat/<name>`). Test + onay olmadan merge yok.
-- Her commit mesajı Conventional Commits formatında:
+- The main branch (`main`) must always be in a working state.
+- New feature → new branch (`feat/<name>`). No merge without tests + approval.
+- Every commit message follows the Conventional Commits format:
   - `feat(auth): add JWT refresh flow`
   - `fix(runner): handle zip bomb edge case`
   - `docs(architecture): add runner flow diagram`
-- **Proje sonunda değil, her onaylanan alt-task'tan sonra GitHub'a push yapılır** (bkz: §9 GitHub Push Protokolü).
-- README.md proje başlangıcında minimal, Faz 7 sonunda portfolio kalitesinde final.
+- **Push to GitHub after every approved sub-task, not at the end of the project** (see §9 GitHub Push Protocol).
+- README.md is minimal at project start and reaches portfolio quality at the end of Phase 7.
 
-### 2.6. Kişisel Bilgi Yasağı
+### 2.6. No Personal Information
 
-- Kodda, testlerde, seed verilerinde, dökümanlarda kişisel bilgi KULLANILMAZ.
-- Mock data: `test+1@example.com`, `Alice Example`, vs. gibi jenerik.
-- Partner/işbirlikçi isimleri, kullanıcının özel bilgileri asla belge veya koda girmez.
+- Personal information is NOT USED in code, tests, seed data, or docs.
+- Mock data: generic, e.g. `test+1@example.com`, `Alice Example`, etc.
+- Partner/collaborator names and users' private information never go into docs or code.
 
 ---
 
-## 3. ÇIKTI FORMATI — DENİZ'E NASIL TESLİM EDERSİN
+## 3. OUTPUT FORMAT — HOW YOU DELIVER TO DENIZ
 
-Claude Code bir alt-task bitirdiğinde rapor verir. Ama **her alt-task iki farklı
-sınıftan birine girer** ve davranış buna göre değişir:
+When Claude Code finishes a sub-task, it reports. But **every sub-task falls into one of two
+classes**, and the behavior differs accordingly:
 
-### 3.A. OTOMATIK-DOĞRULANABİLİR ALT-TASK (çoğunluk)
+### 3.A. AUTO-VERIFIABLE SUB-TASK (the majority)
 
-Alt-task sadece komut çıktılarıyla doğrulanabilirse (build success, unit test pass,
-health check, grep sonucu, docker compose up OK), Deniz'i **rahatsız etme**:
+If the sub-task can be verified by command output alone (build success, unit test pass,
+health check, grep result, docker compose up OK), **do not bother** Deniz:
 
-1. Self-test komutlarını çalıştır.
-2. Hepsi PASS ise:
-   - Commit et (conventional)
-   - Push et (§9 GitHub Push Protokolü)
-   - Kısa rapor ver (aşağıdaki format)
-   - **Hemen sıradaki alt-task'a geç ve çalışmaya başla**
-3. Herhangi bir self-test FAIL ise:
-   - Dur. Deniz'e hatayı ve ne denediğini bildir.
-   - 3 denemeden fazla tekrar etme.
+1. Run the self-test commands.
+2. If all PASS:
+   - Commit (conventional)
+   - Push (§9 GitHub Push Protocol)
+   - Give a short report (format below)
+   - **Immediately move to the next sub-task and start working**
+3. If any self-test FAILS:
+   - Stop. Tell Deniz the error and what you tried.
+   - Do not retry more than 3 times.
 
-**Kısa rapor formatı (otomatik devam durumu):**
+**Short report format (auto-continue case):**
 
 ```
-✅ Alt-task X.Y: <başlık> tamamlandı.
+✅ Sub-task X.Y: <title> completed.
 
-Yapılanlar: <1-2 satır>
-Değişen dosyalar: <liste>
+Done: <1-2 lines>
+Changed files: <list>
 Self-test: unit PASS (12/12) · build OK · secret grep CLEAN
 Commit: feat(auth): add JWT signing helper → pushed to origin/feat/<n>
 
-▶️ Alt-task X.Y+1: <başlık> başlıyor.
+▶️ Sub-task X.Y+1: <title> starting.
 ```
 
-### 3.B. MANUEL-TEST GEREKTİREN ALT-TASK (duraklama)
+### 3.B. SUB-TASK REQUIRING MANUAL TESTING (pause)
 
-Alt-task'ın tamamlanması Deniz'in tarayıcıda tıklamasını, UI'ı göz
-kontrolüyle doğrulamasını, veya subjektif bir değerlendirme yapmasını
-gerektiriyorsa: **DUR**. Uzun rapor ver:
+If completing the sub-task requires Deniz to click in the browser, visually
+check the UI, or make a subjective judgment: **STOP**. Give a long report:
 
 ```
-✋ Alt-task X.Y: <başlık> — Deniz testi bekleniyor.
+✋ Sub-task X.Y: <title> — waiting for Deniz's test.
 
-### Yapılanlar
+### Done
 - <bullet>
 
-### Değişen dosyalar
-- <liste>
+### Changed files
+- <list>
 
-### Otomatik self-test sonuçları
+### Automated self-test results
 - [x] unit test: PASS (12/12)
 - [x] build: OK
 - [x] security grep: CLEAN
 
-### Neden manuel test gerekli
-<UI akışı, subjektif değerlendirme, vb.>
+### Why manual testing is needed
+<UI flow, subjective judgment, etc.>
 
-### Deniz'e test talimatı
+### Test instructions for Deniz
 1. `docker compose up -d`
-2. Tarayıcıda `http://localhost/register`
-3. Test hesabı oluştur: `demo@test.com` / `Test1234!`
-4. Beklenen: 200 OK, /login'e redirect
+2. In the browser: `http://localhost/register`
+3. Create a test account: `demo@test.com` / `Test1234!`
+4. Expected: 200 OK, redirect to /login
 
-### Onay sonrası otomatik yapılacaklar
+### Done automatically after approval
 - git commit + push origin/feat/<n>
-- Alt-task X.Y+1 (<başlık>) başlayacak
+- Sub-task X.Y+1 (<title>) will start
 ```
 
-Deniz "onay" veya "geç" yazdığında:
-1. Commit + push yap.
-2. "Alt-task X.Y onaylandı, pushlandı. Sıradakine geçiyorum: X.Y+1." tek satır bildir.
-3. **Durmadan** sıradaki alt-task'a başla.
+When Deniz writes "onay" or "geç" ("approve" / "skip ahead"):
+1. Commit + push.
+2. Send a single line: "Sub-task X.Y approved, pushed. Moving on to the next one: X.Y+1."
+3. Start the next sub-task **without stopping**.
 
-### 3.C. HANGİSİ OLDUĞUNU NASIL KARAR VERİR?
+### 3.C. HOW TO DECIDE WHICH ONE IT IS
 
-Karar matrisi — alt-task otomatik-doğrulanabilir değildir eğer:
-- UI render sonucu görsel kontrol istiyor
-- Subjektif "güzel mi" değerlendirmesi
-- Tarayıcıda manuel tıklama gerektiriyor
-- End-to-end kullanıcı akışı (register → login → submit → sonuç)
-- Deniz'in subjektif onayı gereken içerik (README wording, vb.)
+Decision matrix — a sub-task is NOT auto-verifiable if:
+- The UI render result needs a visual check
+- It needs a subjective "does it look good" judgment
+- It requires manual clicking in the browser
+- It is an end-to-end user flow (register → login → submit → result)
+- The content needs Deniz's subjective approval (README wording, etc.)
 
-Şüphedeysen 3.B'yi seç (daha konservatif). Ama gereksiz durma yapma —
-build ve test command'ı PASS döndüyse onay istemeye gerek yok.
-
----
-
-## 4. İÇERİK TESLİMATI — DENİZ KAPIDAN NE VERİR
-
-Deniz final sınavlarını ve ünite içeriklerini hazırladığında Claude Code'a
-direkt kod olarak vermez. Bunun yerine `content/inbox/` klasörüne belirli
-formatta bir paket atar. Format detayı 02_CONTENT_CONTRACT.md dosyasındadır.
-
-Claude Code'un görevi:
-1. `scripts/ingest-content.ts` komutunu yazmış olmak (Faz 3'te).
-2. Deniz `content/inbox/unit-XX.zip` attığında bu script çalışır ve içeriği
-   doğru yere yerleştirir.
-3. Claude Code **asla** `content/inbox/` içine manuel bir şey yazmaz.
-4. Claude Code **asla** `content/units/` altındaki dosyaları düzenlemez.
-   Sadece discovery + DB upsert yapar.
+When in doubt, choose 3.B (more conservative). But don't stop needlessly —
+if the build and test commands returned PASS, there is no need to ask for approval.
 
 ---
 
-## 5. SESSION PROTOKOLÜ
+## 4. CONTENT DELIVERY — WHAT DENIZ HANDS OVER AT THE GATE
 
-Her Claude Code session'ı başlarken:
+When Deniz prepares final exams and unit content, they are not handed to Claude Code
+directly as code. Instead, a package in a specific format is dropped into the
+`content/inbox/` folder. The format is detailed in 02_CONTENT_CONTRACT.md.
 
-1. Bu dosyayı (00_MASTER_PROMPT.md) OKUDUĞUNU belirt.
-2. `01_BUILD_PLAN.md` dosyasından mevcut aktif faz ve alt-task'ı belirt.
-3. O alt-task'a odaklan. Başka şey yapma.
-4. Alt-task bitince:
-   - 3.A (otomatik-doğrulanabilir) → self-test yap, PASS ise commit+push+kısa
-     rapor, **hemen sıradakine başla**. Deniz'i rahatsız etme.
-   - 3.B (manuel test gerekli) → uzun rapor, DUR, onay bekle.
-5. Deniz "onay"/"geç"/"devam" dediğinde: commit+push yap, sıradakine başla.
-6. Sıradaki alt-task da aynı döngü.
-
-**Temel kural:** Onay aldıktan sonra DURMA. Commit, push, ve sıradaki task
-başlatma aynı yanıtın parçası olmalı.
-
-Her session kapanırken:
-
-1. Yarım kalan işi `docs/WIP.md` dosyasına yaz.
-2. Bir sonraki session'ın nereden devam edeceğini açıkça belirt.
-3. Commit edilmemiş değişiklik yok (her alt-task sonunda commit + push).
+Claude Code's job:
+1. Have written the `scripts/ingest-content.ts` command (in Phase 3).
+2. When Deniz drops `content/inbox/unit-XX.zip`, this script runs and places the content
+   in the right location.
+3. Claude Code **never** writes anything manually into `content/inbox/`.
+4. Claude Code **never** edits files under `content/units/`.
+   It only does discovery + DB upsert.
 
 ---
 
-## 6. ANTIPATTERN UYARILARI — BUNLARI YAPMA
+## 5. SESSION PROTOCOL
 
-- ❌ "Proje genelinde refactor yapıyorum" — asla. Sadece aktif alt-task.
-- ❌ Birden fazla faz aynı anda. Paralel iş yok.
-- ❌ Manuel test gereken alt-task'ta onay beklemeden push — DUR (bkz: §3.B).
-- ❌ Otomatik-doğrulanabilir alt-task'ta gereksiz onay isteme — DEVAM (bkz: §3.A).
-- ❌ `content/` altına yazma. Orası Deniz'in.
-- ❌ "Şunu da ekleyeyim" — scope creep. Sadece istenen.
-- ❌ Commit mesajında "wip", "stuff", "changes". Conventional Commits zorunlu.
-- ❌ Test yazmadan feature. Her kod + self-test.
-- ❌ Secret'ı `.env` yerine koda koymak. Yasak.
-- ❌ Kullanıcı kişisel bilgisini seed data olarak kullanmak. Yasak.
-- ❌ Push'suz alt-task kapatma. Onaylandıysa muhakkak pushlanır.
+At the start of every Claude Code session:
 
----
+1. State that you HAVE READ this file (00_MASTER_PROMPT.md).
+2. State the current active phase and sub-task from `01_BUILD_PLAN.md`.
+3. Focus on that sub-task. Do nothing else.
+4. When the sub-task is done:
+   - 3.A (auto-verifiable) → run the self-test; if PASS, commit+push+short
+     report, **start the next one immediately**. Don't bother Deniz.
+   - 3.B (manual test needed) → long report, STOP, wait for approval.
+5. When Deniz says "onay"/"geç"/"devam" ("approve"/"skip ahead"/"continue"): commit+push, start the next one.
+6. The next sub-task follows the same loop.
 
-## 7. OKUMAN GEREKEN DİĞER DÖKÜMANLAR
+**Core rule:** Do NOT STOP after receiving approval. Commit, push, and starting the next
+task must be part of the same response.
 
-- `01_BUILD_PLAN.md` — Faz ve alt-task listesi
-- `02_CONTENT_CONTRACT.md` — İçerik teslim formatı
-- `docs/ARCHITECTURE.md` — Teknik mimari (Faz 1'de oluşturulacak)
-- `docs/WIP.md` — Yarım kalan işler (otomatik güncellenir)
+At the end of every session:
 
----
-
-## 8. DENİZ İLE İLETİŞİM KURALLARI
-
-- Belirsizlik varsa sor. Tahmin etme.
-- Bir alt-task'ta 3 deneme sonunda tıkandıysan dur ve sor.
-- Büyük karar (library seçimi, schema değişikliği, yeni servis) için onay al.
-- Hata çıkarsa açıkça bildir, gizleme. "Çalıştı ama..." ifadesi şüphe doğurur.
-- Türkçe yanıt ver ama kod/commit/log İngilizce olsun.
+1. Write unfinished work to `docs/WIP.md`.
+2. State clearly where the next session should pick up.
+3. No uncommitted changes (commit + push at the end of every sub-task).
 
 ---
 
-## 9. GITHUB PUSH PROTOKOLÜ
+## 6. ANTIPATTERN WARNINGS — DO NOT DO THESE
 
-Her alt-task tamamlandığında (otomatik onaylı veya Deniz onayı sonrası)
-**mutlaka GitHub'a pushlanır**. Araç: GitHub CLI (`gh`).
+- ❌ "I'm refactoring across the project" — never. Only the active sub-task.
+- ❌ More than one phase at a time. No parallel work.
+- ❌ Pushing without waiting for approval on a sub-task that needs manual testing — STOP (see §3.B).
+- ❌ Asking for unnecessary approval on an auto-verifiable sub-task — CONTINUE (see §3.A).
+- ❌ Writing under `content/`. That belongs to Deniz.
+- ❌ "Let me add this too" — scope creep. Only what was asked.
+- ❌ "wip", "stuff", "changes" in commit messages. Conventional Commits are mandatory.
+- ❌ Features without tests. Every piece of code + a self-test.
+- ❌ Putting a secret in code instead of `.env`. Forbidden.
+- ❌ Using a user's personal information as seed data. Forbidden.
+- ❌ Closing a sub-task without pushing. If it is approved, it must be pushed.
 
-### 9.1. İlk session — repo kurulumu (bir kerelik)
+---
 
-Session başında `git remote -v` kontrol et:
+## 7. OTHER DOCUMENTS YOU MUST READ
 
-**Remote yoksa:**
-1. `gh auth status` ile authentication kontrol.
-   - Unauthenticated ise: DUR, Deniz'e `gh auth login` yapmasını söyle.
-2. Deniz'e sor (istisnai onay noktası):
+- `01_BUILD_PLAN.md` — Phase and sub-task list
+- `02_CONTENT_CONTRACT.md` — Content delivery format
+- `docs/ARCHITECTURE.md` — Technical architecture (to be created in Phase 1)
+- `docs/WIP.md` — Unfinished work (updated automatically)
+
+---
+
+## 8. RULES FOR COMMUNICATING WITH DENIZ
+
+- If something is unclear, ask. Don't guess.
+- If you are stuck on a sub-task after 3 attempts, stop and ask.
+- Get approval for big decisions (library choice, schema change, new service).
+- If an error occurs, report it openly; don't hide it. "It worked, but..." raises suspicion.
+- Reply in Turkish, but keep code/commits/logs in English.
+
+---
+
+## 9. GITHUB PUSH PROTOCOL
+
+Every time a sub-task is completed (auto-approved or after Deniz's approval) it
+**must be pushed to GitHub**. Tool: GitHub CLI (`gh`).
+
+### 9.1. First session — repo setup (one time)
+
+At session start, check `git remote -v`:
+
+**If there is no remote:**
+1. Check authentication with `gh auth status`.
+   - If unauthenticated: STOP, tell Deniz to run `gh auth login`.
+2. Ask Deniz (exceptional approval point):
    ```
-   GitHub remote yok. Yeni private repo oluşturayım mı?
-   Önerilen ad: iau-ai-platform-v3
-   Görünürlük: private
+   No GitHub remote. Shall I create a new private repo?
+   Suggested name: iau-ai-platform-v3
+   Visibility: private
    ```
-3. Onay gelirse:
+3. If approved:
    ```bash
    gh repo create iau-ai-platform-v3 --private --source=. --remote=origin
    git branch -M main
    git push -u origin main
    ```
-4. Remote bilgisi `docs/WIP.md`'ye yazılır.
+4. The remote info is written to `docs/WIP.md`.
 
-**Remote varsa:** Atla, direkt §9.2'ye.
+**If a remote exists:** Skip, go straight to §9.2.
 
-### 9.2. Her alt-task sonrası push döngüsü
+### 9.2. Push loop after every sub-task
 
-Alt-task başlamadan:
+Before the sub-task starts:
 ```bash
-git checkout -b feat/<short-name>   # ör: feat/auth-jwt, feat/sandbox-image
+git checkout -b feat/<short-name>   # e.g. feat/auth-jwt, feat/sandbox-image
 ```
 
-Alt-task bitince (otomatik veya onay sonrası):
+When the sub-task is done (automatically or after approval):
 ```bash
 git add -A
-git diff --cached --stat   # değişiklik özeti log'a
+git diff --cached --stat   # change summary to the log
 git commit -m "<conventional-commit-message>"
 git push -u origin feat/<short-name>
 ```
 
-İlk başta `main`'e PR otomasyonu KURULMAZ. Feature branch'ler `main`'e
-yalnızca faz tamamlandığında merge edilir (faz bitimi = manuel merge onayı).
+PR automation to `main` is NOT set up at first. Feature branches are merged into `main`
+only when a phase is complete (end of phase = manual merge approval).
 
-### 9.3. Faz sonu merge
+### 9.3. End-of-phase merge
 
-Faz'ın tüm alt-task'ları tamamlandığında:
+When all sub-tasks of a phase are complete:
 
-1. Tüm feat/* branch'leri `main`'e sırayla merge (squash commit):
+1. Merge all feat/* branches into `main` in order (squash commit):
    ```bash
    gh pr create --base main --head feat/<name> --title "Phase N.X: <title>" --fill
    gh pr merge --squash --delete-branch
    ```
-2. `main` üzerinde `git tag phase-N-complete` tag'i
+2. Tag `git tag phase-N-complete` on `main`
 3. `git push --tags`
 
-### 9.4. Commit mesajı şablonu
+### 9.4. Commit message template
 
-Conventional Commits + alt-task referansı:
+Conventional Commits + sub-task reference:
 
 ```
 <type>(<scope>): <description>
 
-Task: X.Y — <alt-task başlığı>
+Task: X.Y — <sub-task title>
 
-<opsiyonel açıklama>
+<optional description>
 
 Self-test: unit PASS (12/12) · build OK · secret grep CLEAN
 ```
 
-Örnek:
+Example:
 ```
 feat(auth): add JWT signing helper with jose
 
@@ -346,34 +345,34 @@ timing-safe password compare.
 Self-test: unit PASS (8/8) · build OK · secret grep CLEAN
 ```
 
-### 9.5. Push başarısız olursa
+### 9.5. If the push fails
 
-- Network hatası → 3 kez retry (exponential backoff: 2s, 5s, 10s)
-- Authentication hatası → DUR, Deniz'e bildir
-- Merge conflict (rare, branch izolasyonu sayesinde) → DUR, Deniz'e bildir
-- Protected branch push reddi → DUR, PR flow'una geç
+- Network error → retry 3 times (exponential backoff: 2s, 5s, 10s)
+- Authentication error → STOP, tell Deniz
+- Merge conflict (rare, thanks to branch isolation) → STOP, tell Deniz
+- Protected branch push rejected → STOP, switch to the PR flow
 
-### 9.6. .gitignore zorunlulukları
+### 9.6. .gitignore requirements
 
-Her push'tan önce `.gitignore` şunları içermeli:
+Before every push, `.gitignore` must contain:
 - `.env`
 - `node_modules/`
 - `content/inbox/*.zip`
 - `content/inbox/processed/`
 - `content/inbox/errors/`
-- `content/units/*/education.pdf` (büyük dosyalar — LFS veya dışarıda)
+- `content/units/*/education.pdf` (large files — LFS or external)
 - `*.log`
 - `.next/`, `dist/`, `build/`
-- `app/public/pdfs/*.pdf` (aynı sebeple)
+- `app/public/pdfs/*.pdf` (same reason)
 
-`content/units/` altındaki **yapısal dosyalar** (`unit.yaml`, `projects.md`,
-`tests/test_runner.py`) git'e dahil olur — PDF ve ZIP içerik dışarıda.
+The **structural files** under `content/units/` (`unit.yaml`, `projects.md`,
+`tests/test_runner.py`) are included in git — PDF and ZIP content stays out.
 
-### 9.7. Büyük dosya stratejisi
+### 9.7. Large file strategy
 
-Education PDF'leri ve reference ZIP'leri git'e commit edilmez. İki seçenek:
+Education PDFs and reference ZIPs are not committed to git. Two options:
 
-1. **Git LFS** (önerilen): Deniz isterse Faz 1.1'de `git lfs track "*.pdf"` kurulur
-2. **External storage**: PDF'ler S3/CDN'de, sadece URL DB'de tutulur
+1. **Git LFS** (recommended): if Deniz wants it, `git lfs track "*.pdf"` is set up in Phase 1.1
+2. **External storage**: PDFs live on S3/CDN, only the URL is kept in the DB
 
-Claude Code Faz 1.1'de bu seçimi Deniz'e sorar (istisnai onay noktası).
+Claude Code asks Deniz about this choice in Phase 1.1 (exceptional approval point).

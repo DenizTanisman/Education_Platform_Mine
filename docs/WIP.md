@@ -1,133 +1,133 @@
 # Work In Progress
 
-> Bu dosya Claude Code tarafından otomatik güncellenir. Yarım kalan işi ve
-> bir sonraki session'ın nereden devam edeceğini gösterir.
+> This file is updated automatically by Claude Code. It shows unfinished work and
+> where the next session should pick up.
 
-## Yön (2026-04-25, Deniz)
+## Direction (2026-04-25, Deniz)
 
-> Sistem tamamen hazır olsun → sonra Deniz Faz 8 içeriklerini getirir.
-> Faz 2.5'ten Faz 7'ye kadar tek tek alt-task onayı bekleme; faz-sonu
-> merge'leri otomatik yap (gh CLI serbest, §9 + memory). UI heavy
-> alt-task'larda (6.x, 7.x) auto-checks (build / typecheck / smoke)
-> yeterli — görsel manuel test EN SON, sistem bütünüyle hazırken.
+> Get the system fully ready → then Deniz brings the Phase 8 content.
+> From Phase 2.5 through Phase 7, don't wait for approval on each sub-task; do
+> end-of-phase merges automatically (gh CLI allowed, §9 + memory). For UI-heavy
+> sub-tasks (6.x, 7.x), auto-checks (build / typecheck / smoke) are
+> enough — manual visual testing comes LAST, once the whole system is ready.
 
-## Aktif durum
+## Current status
 
-- **Faz:** Faz 2 — Sandbox Image + Harness
-- **Durum:** Sistem hazır. Faz 1-7 → main, `system-ready` tag.
+- **Phase:** Phase 2 — Sandbox Image + Harness
+- **Status:** System ready. Phases 1-7 → main, `system-ready` tag.
 - **Branch:** `main` (chore/readiness merged)
-- **Bekleyen:** Faz 8 — Deniz'in unit içeriklerini `content/inbox/`'a atması.
+- **Pending:** Phase 8 — Deniz dropping unit content into `content/inbox/`.
 - **Remote:** `origin` → `https://github.com/DenizTanisman/Education_Platform_Mine.git`
 
-## Son durum notları
+## Latest status notes
 
-- Büyük dosya stratejisi: **Seçenek C — şimdilik git'ten hariç**.
-  PDF'ler, inbox ZIP'leri, reference çözüm ZIP'leri `.gitignore`'da.
-  LFS veya external storage kararı Faz 8'de verilecek.
-- Root'taki kontrat MD'leri (`00_MASTER_PROMPT.md`, `01_BUILD_PLAN.md`,
-  `02_CONTENT_CONTRACT.md`) git tarafından tracked.
-- Faz 1.2 tamamlandı: 4 servis (caddy/app/runner/postgres) placeholder
-  image'larla ayağa kalkıyor. `http://localhost` 200 döndü. `internal_net`
-  postgres için izole, `public_net` sadece caddy için host'a açık.
-- Faz 1.3 tamamlandı: `Makefile` altı hedefle (`start/stop/logs/status/reset/clean`).
-  `reset` "YES" confirm prompt'u ile korunuyor.
-- Faz 1 → `main`'e merged (PR #2 squash — feat/makefile feat/compose-skeleton'dan
-  branch'lendiği için her iki alt-task da tek squash'ta indi). PR #1 orphan,
-  kapatıldı. `phase-1-complete` tag pushed.
-- Faz 2.1 tamamlandı: `infra/sandbox.Dockerfile` — Python 3.11-slim, uid 1001
-  (regular, --system kaldırıldı SYS_UID_MAX warning için), pytest/pydantic/anthropic
-  pin'li, ENTRYPOINT `python /workspace/harness.py`. 240MB. harness.py 2.3'te gelecek.
-- Faz 2.2 tamamlandı: `infra/seccomp.json` — moby v27.3.1 default base,
+- Large-file strategy: **Option C — excluded from git for now**.
+  PDFs, inbox ZIPs and reference solution ZIPs are in `.gitignore`.
+  The LFS vs. external storage decision will be made in Phase 8.
+- The contract MDs at the root (`00_MASTER_PROMPT.md`, `01_BUILD_PLAN.md`,
+  `02_CONTENT_CONTRACT.md`) are tracked by git.
+- Phase 1.2 done: 4 services (caddy/app/runner/postgres) come up with placeholder
+  images. `http://localhost` returned 200. `internal_net` is isolated
+  for postgres, `public_net` is exposed to the host only for caddy.
+- Phase 1.3 done: `Makefile` with six targets (`start/stop/logs/status/reset/clean`).
+  `reset` is guarded by a "YES" confirm prompt.
+- Phase 1 → merged into `main` (PR #2 squash — since feat/makefile was branched
+  from feat/compose-skeleton, both sub-tasks landed in a single squash). PR #1 orphaned,
+  closed. `phase-1-complete` tag pushed.
+- Phase 2.1 done: `infra/sandbox.Dockerfile` — Python 3.11-slim, uid 1001
+  (regular, --system removed because of the SYS_UID_MAX warning), pytest/pydantic/anthropic
+  pinned, ENTRYPOINT `python /workspace/harness.py`. 240MB. harness.py comes in 2.3.
+- Phase 2.2 done: `infra/seccomp.json` — moby v27.3.1 default base,
   extra-deny list (ptrace/unshare/mount/umount/umount2/keyctl/bpf/userfaultfd/
-  clone3/reboot) hem ALLOW rule'larından çıkarıldı hem de en üste explicit
-  ERRNO block olarak eklendi. `scripts/test-seccomp.sh` control+test1+test2 geçti.
-  Gerekçeler `docs/sandbox-seccomp.md`'de.
-- Faz 2.3 tamamlandı: `infra/sandbox/harness.py` + `harness_api.py`,
-  Dockerfile `COPY --chmod=0444` ile her ikisini de `/workspace`'e ro
-  kopyalıyor. Per-test 2s SIGALRM timeout, outer run_tests timeout (default 60s).
-  JSON contract (02_CONTENT_CONTRACT.md §3) harness-level failure'da bile
-  garantili. `tests/test_harness.py` 13 senaryoyla geçti + container-içi smoke
-  (full 2.4 security flag'leri altında bile harness çalıştı).
-- Faz 2.4 tamamlandı: `runner/` TS scaffold (Node 24 native TS, no tsx/ts-node).
+  clone3/reboot) both removed from the ALLOW rules and added at the top as an explicit
+  ERRNO block. `scripts/test-seccomp.sh` control+test1+test2 passed.
+  Rationale in `docs/sandbox-seccomp.md`.
+- Phase 2.3 done: `infra/sandbox/harness.py` + `harness_api.py`,
+  the Dockerfile copies both read-only into `/workspace` with `COPY --chmod=0444`.
+  Per-test 2s SIGALRM timeout, outer run_tests timeout (default 60s).
+  JSON contract (02_CONTENT_CONTRACT.md §3) guaranteed even on
+  harness-level failure. `tests/test_harness.py` passed with 13 scenarios + in-container smoke
+  (the harness ran even under the full 2.4 security flags).
+- Phase 2.4 done: `runner/` TS scaffold (Node 24 native TS, no tsx/ts-node).
   `runner/src/sandbox-runner.ts` — `runSandbox()` + `buildDockerArgs()`.
-  Tüm §2.4 flag'leri: `--network=none --read-only --cap-drop=ALL
+  All §2.4 flags: `--network=none --read-only --cap-drop=ALL
   --security-opt=no-new-privileges --security-opt=seccomp=... --pids-limit=64
   --memory=512m --memory-swap=512m --cpus=0.5 --tmpfs /tmp:rw,noexec,nosuid,size=64m`.
-  Detached watchdog container'ı `docker kill` ile hard-stop ediyor (spawnSync
-  timeout sadece CLI client'ı öldürüyor, container'ı değil — belt+suspenders).
+  A detached watchdog hard-stops the container with `docker kill` (the spawnSync
+  timeout only kills the CLI client, not the container — belt+suspenders).
   stdout/stderr 1MB cap (maxBuffer). Outcome union: ok/timeout/crash/invalid_json/output_truncated.
   Integration suite 8/8: arg construction (2) + happy/timeout/network/readonly/
   fork-bomb-containment/fail-propagation (6).
 
-- Faz 2.5 tamamlandı: `runner/src/cli.ts` (thin CLI), `scripts/test-sandbox.sh`,
+- Phase 2.5 done: `runner/src/cli.ts` (thin CLI), `scripts/test-sandbox.sh`,
   `scripts/sandbox-examples/{pass,fail,malicious}/{tests,code}/`,
-  `docs/sandbox-security-selftest.md`, Makefile'a `sandbox` ve `sandbox-test`
-  target'ları eklendi. 3/3 örnek doğrulandı: pass→passed, fail→failed (clean
-  diff), malicious→3/3 escape contained (URLError/OSError/ptrace rv=-1).
-- Faz 2 → main: PR'lar yeniden açıldı (downstream'ler her squash'ta kapanıyor —
-  pattern memory'de). 5 PR sırayla squash-merged, `phase-2-complete` tag pushed.
-- Faz 3.1 tamamlandı: `app/prisma/schema.prisma` — 9 model (User, Unit, Video,
+  `docs/sandbox-security-selftest.md`, `sandbox` and `sandbox-test`
+  targets added to the Makefile. 3/3 examples verified: pass→passed, fail→failed (clean
+  diff), malicious→3/3 escapes contained (URLError/OSError/ptrace rv=-1).
+- Phase 2 → main: PRs reopened (downstream PRs get closed on every squash —
+  pattern is in memory). 5 PRs squash-merged in order, `phase-2-complete` tag pushed.
+- Phase 3.1 done: `app/prisma/schema.prisma` — 9 models (User, Unit, Video,
   Project, TestGroup, TestCase, UnitProgress, Submission, SubmissionTestResult)
-  + 4 enum. Migration: `init` + `running_submission_partial_unique` (raw SQL
-  partial unique index, prisma henüz native desteklemiyor). `app/Dockerfile.migrate`
-  (node:20-slim + openssl) ve `make migrate-build` / `make migrate` target'ları.
-  `internal_net`'in `internal: true` flag'i kaldırıldı — segmentation kalıyor
-  (Caddy'nin postgres'i göremiyor olması) ama bir-off tooling container'ları
-  prisma binary'lerini fetch edebilsin.
+  + 4 enums. Migrations: `init` + `running_submission_partial_unique` (raw SQL
+  partial unique index, Prisma doesn't support it natively yet). `app/Dockerfile.migrate`
+  (node:20-slim + openssl) and the `make migrate-build` / `make migrate` targets.
+  The `internal: true` flag on `internal_net` was removed — segmentation stays
+  (Caddy can't see postgres) but one-off tooling containers
+  can fetch the Prisma binaries.
 
-- Faz 3.2 + 3.3 tamamlandı: `app/scripts/ingest-content.ts` — filename regex,
+- Phases 3.2 + 3.3 done: `app/scripts/ingest-content.ts` — filename regex,
   ZIP extraction (adm-zip), unit.yaml parse (yaml), required-files check,
   reference solution sandbox check (runner CLI), Prisma upsert (Unit, Video,
   Project, TestGroup; TestCase lazily on first submission). `--dry-run` flag.
-  Hatalı ZIP'ler `content/inbox/errors/<zip>.log`'a yazılır, geçenler
-  `processed/`'a taşınır.
-  - 13 unit testi (`app/scripts/ingest-content.test.ts`) geçti.
-  - End-to-end smoke: gerçek ZIP → ingest pipeline → sandbox PASS → DB'ye
-    Unit+TestGroup yazıldı, PDF kopyalandı, ZIP processed'a taşındı.
-  - `make ingest` / `make ingest-dry`: HOST'tan koşar (docker-in-docker path
-    translation derdi yok). Postgres `127.0.0.1:5433`'te loopback exposure.
+  Broken ZIPs are logged to `content/inbox/errors/<zip>.log`, passing ones
+  are moved to `processed/`.
+  - 13 unit tests (`app/scripts/ingest-content.test.ts`) passed.
+  - End-to-end smoke: real ZIP → ingest pipeline → sandbox PASS → Unit+TestGroup
+    written to the DB, PDF copied, ZIP moved to processed.
+  - `make ingest` / `make ingest-dry`: run from the HOST (no docker-in-docker path
+    translation hassle). Postgres exposed on loopback at `127.0.0.1:5433`.
 
-- Faz 3 → main, `phase-3-complete` tag pushed.
-- Faz 4.1-4.4 tamamlandı: `runner/src/{server,queue,runner-core,db}.ts` —
+- Phase 3 → main, `phase-3-complete` tag pushed.
+- Phases 4.1-4.4 done: `runner/src/{server,queue,runner-core,db}.ts` —
   Express + Zod + p-limit (4 concurrent / 10 queued / 429 beyond), shared
   secret middleware (`x-runner-secret`, constant-time), 10MB JSON body cap,
-  graceful shutdown 30s drain. End-to-end: ZIP extract → sandbox call →
+  graceful shutdown with 30s drain. End-to-end: ZIP extract → sandbox call →
   Prisma transaction (Submission + SubmissionTestResult, lazy TestCase
   upsert by extId) → UnitProgress unlock-next-on-pass. `app/prisma/schema.prisma`
-  ikinci generator block ile `runner/node_modules/.prisma/client/`'a da yazıyor
-  (npm workspace gerektirmeden cross-package prisma erişimi).
+  also writes to `runner/node_modules/.prisma/client/` via a second generator block
+  (cross-package Prisma access without needing npm workspaces).
   - `runner/tests/server.test.ts`: 4 HTTP/auth + 1 full E2E (real sandbox +
-    real Prisma write + UnitProgress verify) — 12/12 PASS toplamda
+    real Prisma write + UnitProgress verify) — 12/12 PASS in total
     (sandbox-runner integration 6/6 + arg construction 2/2 + server 4/0).
 
-- Faz 4 → main, `phase-4-complete` tag pushed.
-- Faz 5.1-5.4 tamamlandı: Next.js 15 scaffold (App Router), Tailwind YOK
-  (basit globals.css), tsconfig + standalone output. `app/lib/auth.ts`
+- Phase 4 → main, `phase-4-complete` tag pushed.
+- Phases 5.1-5.4 done: Next.js 15 scaffold (App Router), NO Tailwind
+  (plain globals.css), tsconfig + standalone output. `app/lib/auth.ts`
   (Node, bcrypt + signSession + maybeRefresh), `app/lib/auth-edge.ts`
-  (jose-only verifySession — middleware bcrypt'i edge bundle'a sızdırmasın),
+  (jose-only verifySession — so the middleware doesn't leak bcrypt into the edge bundle),
   `app/lib/rate-limit.ts` (in-memory sliding window). API routes:
-  /api/{register,login,logout,me,healthz}. Middleware /admin için role guard,
-  protected route'lara JWT gate. UI sayfaları: /, /login (Suspense'le sarılmış
-  useSearchParams), /register, /dashboard (Faz 6 placeholder).
+  /api/{register,login,logout,me,healthz}. Middleware role guard for /admin,
+  JWT gate on protected routes. UI pages: /, /login (useSearchParams
+  wrapped in Suspense), /register, /dashboard (Phase 6 placeholder).
   - Tests: 27/27 PASS (auth 8 + rate-limit 6 + ingest 13).
-  - Build: clean, 12 route, middleware 39.8 kB.
+  - Build: clean, 12 routes, middleware 39.8 kB.
   - End-to-end smoke: register→cookie set, /api/me→user data, login bad pw→401,
-    logout→cookie clear, /api/me sonrası→401, /dashboard→307 to /login.
+    logout→cookie clear, /api/me afterwards→401, /dashboard→307 to /login.
 
-- Faz 5,6,7 hepsi → main + `phase-5-complete` / `phase-6-complete` /
-  `phase-7-complete` tag'ları pushed.
-- Production Dockerfile'lar (`app/Dockerfile`, `runner/Dockerfile`),
+- Phases 5, 6, 7 all → main + `phase-5-complete` / `phase-6-complete` /
+  `phase-7-complete` tags pushed.
+- Production Dockerfiles (`app/Dockerfile`, `runner/Dockerfile`),
   compose wiring (build:./app + build:./runner, content + seccomp +
   docker.sock + same-path repo bind mount, REPO_ROOT env), Caddyfile
-  app:3000'e taşındı, `make promote-admin EMAIL=...`, `docs/READINESS.md`.
+  moved to app:3000, `make promote-admin EMAIL=...`, `docs/READINESS.md`.
 - End-to-end compose smoke: register → /api/me → ingest → final upload →
   runner dispatch → docker-in-docker sandbox → PASSED → UnitProgress
-  COMPLETED → admin pages reachable. **Submission tek poll'da terminal'e
-  ulaştı (~600ms total)**.
+  COMPLETED → admin pages reachable. **The submission reached a terminal state
+  in a single poll (~600ms total)**.
 - `system-ready` tag pushed.
 
-## Bir sonraki adım
+## Next step
 
-Faz 8 — Deniz unit içeriklerini hazırlayıp `content/inbox/unit-NN-slug.zip`
-formatında atar. `make ingest` (host'tan) DB'ye kaydeder. Manuel test
+Phase 8 — Deniz prepares the unit content and drops it in the
+`content/inbox/unit-NN-slug.zip` format. `make ingest` (from the host) records it in the DB. Manual test
 playbook: `docs/READINESS.md`.
